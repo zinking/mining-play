@@ -1,0 +1,6 @@
+#Home Page
+GET      /                   controllers.Application.index
+
+#Authentication
+GET      /login              controllers.Application.login
+
