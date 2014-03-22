@@ -1,6 +1,49 @@
 #Home Page
-GET      /                   controllers.Application.index
+GET     /                   			controllers.Application.index
 
 #Authentication
-GET      /login              controllers.Application.login
+GET     /login              			controllers.Application.login
+*		/login/google					controllers.Application.default
+GET		/logout							controllers.Application.default
 
+GET 	/static/*file   				controllers.Assets.at(path="/public", file) 
+
+GET		/push							controllers.Application.default
+*		/tasks/import-opml 				controllers.Application.default
+*		/tasks/subscribe-feed 			controllers.Application.default
+*		/tasks/update-feed-last 		controllers.Application.default
+*		/tasks/update-feed-manual 		controllers.Application.default
+*		/tasks/update-feed 				controllers.Application.default
+*		/tasks/update-feeds 			controllers.Application.default
+*		/tasks/delete-old-feeds 		controllers.Application.default
+*		/tasks/delete-old-feed 			controllers.Application.default
+
+*		/user/add-subscription 			controllers.User.addSubscription
+*		/user/delete-account 			controllers.User.deleteAccount
+*		/user/export-opml 				controllers.User.exportOPML
+*		/user/feed-history 				controllers.User.feedHistory
+*		/user/get-contents 				controllers.User.getContents
+*		/user/get-fee 					controllers.User.getFee
+*		/user/get-stars 				controllers.User.getStars
+*		/user/import/opml 				controllers.User.importOPML
+*		/user/list-feeds 				controllers.User.listFeeds
+*		/user/mark-read 				controllers.User.markRead
+*		/user/mark-unread 				controllers.User.markUnread
+*		/user/save-options 				controllers.User.saveOptions
+*		/user/set-star 					controllers.User.setStar
+*		/user/upload-opml 				controllers.User.uploadOPML
+*		/user/charge 					controllers.User.charge
+*		/user/account 					controllers.User.account
+*		/user/uncheckout 				controllers.User.unCheckout
+
+*		/admin/all-feeds 				controllers.Application.default
+*		/admin/all-feeds-opml 			controllers.Application.default
+*		/admin/user 					controllers.Application.default
+*		/date-formats 					controllers.Application.default
+*		/admin/feed 					controllers.Application.default
+*		/admin/subhub 					controllers.Application.default
+*		/admin/stats 					controllers.Application.default
+*		/admin/update-feed 				controllers.Application.default
+
+
+	
