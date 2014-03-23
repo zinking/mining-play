@@ -5,7 +5,13 @@ import play.api.mvc._
 
 object Application extends Controller{
   def index = Action { implicit request =>
-    Ok("Hello World")
+    val user = models.User.findAll(0)
+    val msgs = Seq( "hello", "world")
+    val role = 1
+    val stripekey = "l32jk"
+    
+    Ok( views.html.index(user,stripekey,msgs,role) )
+     
   }
   
   def login = Action {

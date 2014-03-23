@@ -5,6 +5,10 @@ import play.api.mvc._
 
 object User extends Controller{
   
+  def loginGoogle = Action{ request =>
+    NotImplemented
+  }
+  
   def addSubscription = Action{ request =>
     NotImplemented
   }
@@ -30,6 +34,10 @@ object User extends Controller{
   }
   
   def getStars = Action{ request =>
+    NotImplemented
+  }
+  
+  def getFeed = Action{ request =>
     NotImplemented
   }
   
