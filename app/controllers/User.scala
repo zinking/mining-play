@@ -2,6 +2,10 @@ package controllers
 
 import play.api._
 import play.api.mvc._
+import models.Opml
+import models.Story
+import models.Feed
+import play.libs.Json
 
 object User extends Controller{
   
@@ -46,7 +50,34 @@ object User extends Controller{
   }
   
   def listFeeds = Action{ request =>
-    NotImplemented
+    //NotImplemented
+    val result = """
+    {
+      "Opml":[
+    	{"Title":"T1", "XmlUrl":"XmlT1", "Type":"rss", "Text":"TEXT T1", "HtmlUrl":"htmlT1", "Outline":[] },
+        {"Title":"T2", "XmlUrl":"XmlT2", "Type":"rss", "Text":"TEXT T2", "HtmlUrl":"htmlT2", "Outline":[] },
+        {"Title":"T3", "XmlUrl":"XmlT3", "Type":"rss", "Text":"TEXT T3", "HtmlUrl":"htmlT3", "Outline":[] }
+      ],
+      "Stories":[
+    	{"Id":1,"Title":"Title1","Link":"Link1","Created":"2014-03-03", "Published":"2014-03-03", 
+         "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
+        {"Id":1,"Title":"Title1","Link":"Link1","Created":"2014-03-03", "Published":"2014-03-03", 
+         "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
+        {"Id":1,"Title":"Title1","Link":"Link1","Created":"2014-03-03", "Published":"2014-03-03", 
+         "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
+      ],
+      "Feeds":[
+        {"Url":"U1","Title":"Title1", "Updated":"2014-03-03", "Date":"2014-03-03"},
+        {"Url":"U1","Title":"Title1", "Updated":"2014-03-03", "Date":"2014-03-03"},
+        {"Url":"U1","Title":"Title1", "Updated":"2014-03-03", "Date":"2014-03-03"}
+       ],
+      "UnreadDate":"2014-03-24",
+      "UntilDate":"2014-08-24"
+    }
+    """
+    
+    
+    Ok( result ).as("application/json")
   }
   
   def markRead = Action{ request =>

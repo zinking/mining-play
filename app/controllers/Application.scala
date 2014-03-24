@@ -6,7 +6,7 @@ import play.api.mvc._
 object Application extends Controller{
   def index = Action { implicit request =>
     val user = models.User.findAll(0)
-    val msgs = Seq( "hello", "world")
+    val msgs = Seq( )
     val role = 1
     val stripekey = "l32jk"
     

@@ -28,6 +28,7 @@ GET		/user/get-feed 					controllers.User.getFeed
 GET		/user/get-stars 				controllers.User.getStars
 GET		/user/import/opml 				controllers.User.importOPML
 GET		/user/list-feeds 				controllers.User.listFeeds
+POST	/user/list-feeds 				controllers.User.listFeeds
 GET		/user/mark-read 				controllers.User.markRead
 GET		/user/mark-unread 				controllers.User.markUnread
 GET		/user/save-options 				controllers.User.saveOptions

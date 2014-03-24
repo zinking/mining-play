@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+    <head>
+        <title>Google 阅读器中 Albert 的订阅</title>
+    </head>
+    <body>
+        <outline text="C++博客-7words" title="C++博客-7words" type="rss"
+            xmlUrl="http://www.cppblog.com/7words/Rss.aspx" htmlUrl="http://www.cppblog.com/7words/"/>
+        <outline text="C++博客-前进的路上" title="C++博客-前进的路上" type="rss"
+            xmlUrl="http://www.cppblog.com/wc250en007/Rss.aspx" htmlUrl="http://www.cppblog.com/wc250en007/"/>
+        <outline text="We need more……" title="We need more……" type="rss"
+            xmlUrl="http://blog.csdn.net/zhuliting/rss/list" htmlUrl="http://blog.csdn.net/zhuliting"/>
+        <outline title="FlexBlogs" text="FlexBlogs">
+            <outline text="AdobeAll-Bee" title="AdobeAll-Bee" type="rss"
+                xmlUrl="http://www.beedigital.net/blog/?feed=rss2" htmlUrl="http://www.beedigital.net/blog"/>
+            <outline text="Andre of Nitobi" title="Andre of Nitobi"
+                type="rss"
+                xmlUrl="http://blogs.nitobi.com/andre/index.php/feed/" htmlUrl="http://blogs.nitobi.com/andre"/>
+            <outline text="Anirudh Sasikumar" title="Anirudh Sasikumar"
+                type="rss"
+                xmlUrl="http://anirudhs.chaosnet.org/blog/weblog.xml" htmlUrl="http://anirudhsasikumar.net/"/>
+            <outline text="Axelology" title="Axelology" type="rss"
+                xmlUrl="http://www.axelscript.com/feed/" htmlUrl="http://www.axelscript.com"/>
+            <outline text="Bill White's Blog" title="Bill White's Blog"
+                type="rss"
+                xmlUrl="http://www.billdwhite.com/wordpress/?feed=rss2" htmlUrl="http://www.billdwhite.com/wordpress"/>
+            <outline text="CFLEX" title="CFLEX" type="rss"
+                xmlUrl="http://www.cflex.net/news.cfm?ChannelID=1" htmlUrl="http://www.cflex.net"/>
+            <outline text="Christophe Coenraets"
+                title="Christophe Coenraets" type="rss"
+                xmlUrl="http://coenraets.org/blog/feed/" htmlUrl="http://coenraets.org/blog"/>
+            <outline text="code zen" title="code zen" type="rss"
+                xmlUrl="http://www.arpitonline.com/blog/?feed=rss2" htmlUrl="http://arpitonline.com/blog"/>
+            <outline text="Danger's Blog" title="Danger's Blog"
+                type="rss" xmlUrl="http://www.dengjie.com/rss.asp" htmlUrl="http://www.dengjie.com"/>
+            <outline text="Eric Architect" title="Eric Architect"
+                type="rss"
+                xmlUrl="http://www.ericfeminella.com/blog/feed/" htmlUrl="http://www.ericfeminella.com/blog"/>
+            
+        </outline>
+        
+    </body>
+</opml>
