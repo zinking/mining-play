@@ -30,9 +30,11 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		}
 	};
 
+	//TBD import OPML into reader
+	//not preventing repeated work (maybe won't happen)
 	$scope.importOpml = function() {
 		$scope.shown = 'feeds';
-		$scope.loading++;
+		$scope.loading++; //not a well desgined format all should be encapsulated
 		$('#import-opml-form').ajaxForm(function() {
 			$('#import-opml-form')[0].reset();
 			$scope.loaded();
@@ -44,6 +46,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.loading--;
 	};
 
+	//data is optional
 	$scope.http = function(method, url, data) {
 		return $http({
 			method: method,
@@ -54,7 +57,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	};
 
 	$scope.addSubscription = function(e) {
-		if (!$scope.addFeedUrl) {
+		if (!$scope.addFeedUrl) {//checking this value to prevent repeated add
 			return false;
 		}
 		var btn = $(e.target);
@@ -74,7 +77,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 					$scope.setActive('feed', _.last($scope.feeds).XmlUrl);
 				});
 			}, 250);
-		}, function(data) {
+		}, function(data) { //action 2 in then ???? what for ???
 			if (data.data) {
 				alert(data.data);
 			}
@@ -83,28 +86,30 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		});
 	};
 
+	//process story : @feed it come from @story content @read info
 	$scope.procStory = function(xmlurl, story, read) {
 		story.read = read;
-		story.feed = $scope.xmlurls[xmlurl];
-		story.guid = xmlurl + '|' + story.Id;
+		story.feed = $scope.xmlurls[xmlurl]; //def:xmlurls is a map from rssurl to feed
+		story.guid = xmlurl + '|' + story.Id;//story unique id
 		if (!story.Title) {
 			story.Title = '(title unknown)';
 		}
 		var today = new Date().toDateString();
 		var d = new Date(story.Date * 1000);
 		story.dispdate = moment(d).format(d.toDateString() == today ? "h:mm a" : "MMM D, YYYY");
+		//???? what is can unread ??? what is scope.unreadDate
 		story.canUnread = story.Created >= $scope.unreadDate;
 	};
 
 	$scope.clear = function() {
-		$scope.feeds = [];
+		$scope.feeds = [];   //feed
 		$scope.numfeeds = 0;
-		$scope.stories = [];
-		$scope.unreadStories = {};
-		$scope.xmlurls = {};
-		$scope.icons = {};
+		$scope.stories = []; //stories
+		$scope.unreadStories = {}; //
+		$scope.xmlurls = {}; //map from rssurl to a feed(blog)
+		$scope.icons = {};   //feed favicon
 		$scope.feedData = {};
-		$scope.stars = {};
+		$scope.stars = {};   //star
 	};
 
 	$scope.update = function() {
@@ -114,11 +119,15 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.updateTitle();
 	};
 
+
+	//the sequencing is odd and same feed get updated multiple times
+	//TBD
 	$scope.updateFolders = function() {
-		_.each($scope.feeds, function(f, i) {
-			if (f.Outline) {
+		_.each($scope.feeds, function(f, i) {//for each feeed do 
+			if (f.Outline) { //if feed has an outline 
 				_.each(f.Outline, function(s) {
-					s.folder = f.Title;
+					s.folder = f.Title; 
+					//update all the feed folder in this outline
 				});
 			} else {
 				delete f.folder;
@@ -126,14 +135,16 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		});
 	};
 
+
+	//this is list feeds
 	$scope.refresh = function(cb) {
 		$scope.loading++;
-		$scope.shown = 'feeds';
+		$scope.shown = 'feeds'; //shown is binded with display to control what will show
 		$scope.resetScroll();
 		delete $scope.currentStory;
 		$http.post($('#refresh').attr('data-url-feeds'))
 			.success(function(data) {
-				$scope.clear();
+				$scope.clear(); //basically resets everything
 				if (data.ErrorSubscription) {
 					$timeout(function() {
 						alert('Free trial ended. Please subscribe.');
@@ -149,23 +160,36 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 						if (e.Image.slice(0, 5) === "http:") {
 							e.Image = e.Image.slice(5);
 						}
+					        //e.url is feed identifer
+					        //icons store the icon map of feed
 						$scope.icons[e.Url] = e.Image;
 					}
+				        //this must be the feed updated time
 					e.Checked = moment(e.Checked).fromNow();
+				        //this must be the feed next update time
 					e.NextUpdate = moment(e.NextUpdate).fromNow();
+				        //feed data repo
 					$scope.feedData[e.Url] = e;
 				});
 				_.each(data.Stars, function(s) {
+				        //what does this mean  ???
 					$scope.stars[s] = Date.now();
 				});
 				$scope.opts = data.Options ? JSON.parse(data.Options) : $scope.opts;
 				$scope.trialRemaining = data.TrialRemaining;
 
+			        //load stories for feed f
 				var loadStories = function(feed) {
 					$scope.numfeeds++;
+				        //is this xmlurls duplicated with feedData
+				        //??? mapping feed URL to feed
 					$scope.xmlurls[feed.XmlUrl] = feed;
+				        //here is where the data.stories come from
 					var stories = data.Stories[feed.XmlUrl] || [];
+				        //for every feed, go through all the stories available
+				        //put the story into correct feed bucket
 					for(var i = 0; i < stories.length; i++) {
+					        //loaded stores are all unread
 						$scope.procStory(feed.XmlUrl, stories[i], false);
 						$scope.stories.push(stories[i]);
 						$scope.unreadStories[stories[i].guid] = true;
@@ -180,6 +204,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 					} else if (f.Outline) {  // check for empty groups
 						for(var j = 0; j < f.Outline.length; j++) {
 							loadStories(f.Outline[j]);
+						        //added folder attribute for these sub
 							$scope.xmlurls[f.Outline[j].XmlUrl].folder = f.Title;
 						}
 					}
@@ -197,6 +222,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			});
 	};
 
+        //update the page title to display newest unread count
 	$scope.updateTitle = function() {
 		var ur = $scope.unread['all'] || 0;
 		document.title = 'go read' + (ur != 0 ? ' (' + ur + ')' : '');
@@ -297,7 +323,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			var sdh = sd.height();
 			var sdt = sd.position().top;
 			var slh = sl.height();
-			if (sdt + sdh > slh) {
+			if (sdt + sdh > slh) { //if div top + div height > scroll list height 
 				var slt = sl.scrollTop();
 				sl.scrollTop(slt + slh - 20);
 				return;
@@ -308,6 +334,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		}
 	};
 
+        //update the unread number on all outlines
 	$scope.updateUnread = function() {
 		$scope.unread = {
 			'all': 0,
@@ -341,6 +368,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.updateUnreadCurrent();
 	};
 
+        //update corresponding number 
 	$scope.updateUnreadCurrent = function() {
 		if ($scope.activeFeed) $scope.unread.current = $scope.unread.feeds[$scope.activeFeed];
 		else if ($scope.activeFolder) $scope.unread.current = $scope.unread.folders[$scope.activeFolder];
@@ -348,7 +376,9 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	};
 
 	$scope.markReadStories = [];
+        // mark all stories read, if story passed only mark it 
 	$scope.markAllRead = function(story) {
+	        //dispstories contain all the stories that are currently listed
 		if (!$scope.dispStories.length) return;
 		var checkStories = story ? [story] : $scope.dispStories;
 		for (var i = 0; i < checkStories.length; i++) {
@@ -357,7 +387,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 				if ($scope.opts.mode == 'unread') s.remove = true;
 				s.read = true;
 				delete s.Unread;
-				$scope.markReadStories.push({
+				$scope.markReadStories.push({ //feed + story 
 					Feed: s.feed.XmlUrl,
 					Story: s.Id
 				});
@@ -368,30 +398,31 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.update();
 	};
 
-	$scope.markUnread = function(s) {
-		var uc = !s.Unread;
+	$scope.markUnread = function(s) { //mark unread and mark read ????
+		var uc = !s.Unread; //uc means s.read?
 		var attr = uc ? '' : 'un';
 		$scope.http('POST', $('#mark-all-read').attr('data-url-' + attr + 'read'), {
 			feed: s.feed.XmlUrl,
 			story: s.Id
 		});
-		if (uc) {
+		if (uc) { //if read then delete from unread
 			delete $scope.unreadStories[s.guid];
 			delete s.Unread;
 			s.read = true;
 			s.remove = true;
-		} else {
+		} else { //if unread then 
 			$scope.unreadStories[s.guid] = true;
 			s.Unread = true;
 			delete s.read;
 			delete s.remove;
 		}
-		if ($scope.stories.indexOf(s) == -1) {
+		if ($scope.stories.indexOf(s) == -1) { //if not in stories then add 
 			$scope.stories.push(s);
 		}
 		$scope.update();
 	};
 
+        //sync the read stories with server side
 	$scope.sendReadStories = _.debounce(function() {
 		var ss = $scope.markReadStories;
 		$scope.markReadStories = [];
@@ -417,7 +448,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.saveOpts();
 	};
 
-	$scope.toggleExpanded = function() {
+	$scope.toggleExpanded = function() { //really could be merged
 		$scope.opts.expanded = !$scope.opts.expanded;
 		$scope.saveOpts();
 		$scope.applyGetFeed();
@@ -448,6 +479,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.$apply();
 	}, 1000);
 
+        //all contents are stored in this structure
 	$scope.overContents = function(s) {
 		if (typeof $scope.contents[s.guid] !== 'undefined') {
 			return;
@@ -456,6 +488,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			$scope.getContents(s);
 		}, 250);
 	};
+        //cancel the request
 	$scope.leaveContents = function(s) {
 		if (s.getTimeout) {
 			$timeout.cancel(s.getTimeout);
@@ -473,9 +506,10 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		}
 	};
 
+        //fetch contents
 	$scope.fetchContents = function() {
 		delete $scope.fetchPromise;
-		if ($scope.toFetch.length == 0) {
+		if ($scope.toFetch.length == 0) { //all what is key is toFetch
 			return;
 		}
 		var tofetch = $scope.toFetch;
@@ -483,11 +517,12 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		var data = [];
 		for (var i = 0; i < tofetch.length; i++) {
 			$scope.contents[tofetch[i].guid] = '';
-			data.push({
+			data.push({ //INPUT SPEC for fetch contents
 				Feed: tofetch[i].feed.XmlUrl,
 				Story: tofetch[i].Id
 			});
 		}
+	        //the id should really be renamed
 		$http.post($('#mark-all-read').attr('data-url-contents'), data)
 			.success(function(data) {
 				var current = '';
@@ -509,7 +544,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.checkLoadNextPage();
 	}
 
-	$scope.setActive = function(type, value) {
+	$scope.setActive = function(type, value) { //set active???
 		delete $scope.activeFeed;
 		delete $scope.activeFolder;
 		delete $scope.activeStar;
@@ -547,7 +582,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 
 	$scope.updateStories = function() {
 		$scope.dispStories = [];
-		if ($scope.activeFolder) {
+		if ($scope.activeFolder) {//this is too much, they deserve a function
 			for (var i = 0; i < $scope.stories.length; i++) {
 				var s = $scope.stories[i];
 				if ($scope.xmlurls[s.feed.XmlUrl].folder == $scope.activeFolder) {
@@ -555,7 +590,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 				}
 			}
 		} else if ($scope.activeFeed) {
-			if ($scope.opts.mode != 'unread') {
+			if ($scope.opts.mode != 'unread') { // all items
 				_.each($scope.readStories[$scope.activeFeed], function(s) {
 					if ($scope.unreadStories[s.guid]) {
 						s.read = false;
@@ -569,7 +604,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 					}
 				});
 			}
-		} else if ($scope.activeStar) {
+		} else if ($scope.activeStar) {//list and sort star stories
 			$scope.dispStories = _.values($scope.starStories);
 			$scope.dispStories.sort(function(a, b) {
 				return $scope.stars[b.guid] - $scope.stars[a.guid];
@@ -579,6 +614,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			$scope.dispStories = $scope.stories;
 		}
 
+	       //swap really means oldest first
 		var swap = $scope.opts.sort == 'oldest'
 		if (swap) {
 			// turn off swap for all items mode on a feed
@@ -610,6 +646,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	};
 
 	$scope.renameFolder = function(folder) {
+	        //don't understand why rename folder become so complicated
 		var name = prompt('Rename to', folder);
 		if (!name) return;
 		var src, dst;
@@ -632,6 +669,8 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.update();
 	};
 
+        //I don't think this is a necessary requirement
+        //I never used such functionality
 	$scope.deleteFolder = function(folder) {
 		if (!confirm('Delete ' + folder + ' and unsubscribe from all feeds in it?')) return;
 		for (var i = 0; i < $scope.feeds.length; i++) {
@@ -646,6 +685,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.update();
 	};
 
+        //delete feed from feeds
 	$scope.unsubscribe = function(feed) {
 		if (!confirm('Unsubscribe from ' + $scope.xmlurls[feed].Title + ' (' + feed + ')?')) return;
 		for (var i = 0; i < $scope.feeds.length; i++) {
@@ -778,13 +818,16 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			var success = function(data) {
 				if (!data.Stories) return;
 				delete $scope.fetching['stars'];
+			        //cursor is a way GAE to track the db table offset
+			        //so the app is using this feature
 				$scope.cursors['stars'] = data.Cursor;
 				_.each(data.Stars, function(v, k) {
+				        //convert to millis
 					$scope.stars[k] = v * 1000;
 				});
 				_.each(data.Stories, function(stories, f) {
 					_.each(stories, function(s) {
-						$scope.procStory(f, s);
+						$scope.procStory(f, s); //xmlurl , story , read
 						s.read = !$scope.unreadStories[s.guid];
 						$scope.starStories[s.guid] = s;
 					});

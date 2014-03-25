@@ -22,7 +22,7 @@ GET		/user/add-subscription 			controllers.User.addSubscription
 GET		/user/delete-account 			controllers.User.deleteAccount
 GET		/user/export-opml 				controllers.User.exportOPML
 GET		/user/feed-history 				controllers.User.feedHistory
-GET		/user/get-contents 				controllers.User.getContents
+POST	/user/get-contents 				controllers.User.getContents
 GET		/user/get-fee 					controllers.User.getFee
 GET		/user/get-feed 					controllers.User.getFeed
 GET		/user/get-stars 				controllers.User.getStars
