@@ -848,7 +848,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			success(data);
 			$scope.updateStories();
 			$scope.checkLoadNextPage();
-			$scope.applyGetFeed();
+			//$scope.applyGetFeed();
 		});
 	};
 

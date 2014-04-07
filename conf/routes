@@ -1,13 +1,7 @@
 #Home Page
 GET     /                   			controllers.Application.index
 
-#Authentication
-GET     /login              			controllers.Application.login
-GET		/login/google					controllers.User.loginGoogle
-GET		/logout							controllers.Application.default
-
 GET 	/static/*file   				controllers.Assets.at(path="/public", file) 
-
 GET		/push							controllers.Application.default
 GET		/tasks/import-opml 				controllers.Application.default
 GET		/tasks/subscribe-feed 			controllers.Application.default
@@ -17,7 +11,6 @@ GET		/tasks/update-feed 				controllers.Application.default
 GET		/tasks/update-feeds 			controllers.Application.default
 GET		/tasks/delete-old-feeds 		controllers.Application.default
 GET		/tasks/delete-old-feed 			controllers.Application.default
-
 GET		/user/add-subscription 			controllers.User.addSubscription
 GET		/user/delete-account 			controllers.User.deleteAccount
 GET		/user/export-opml 				controllers.User.exportOPML
@@ -31,7 +24,7 @@ GET		/user/list-feeds 				controllers.User.listFeeds
 POST	/user/list-feeds 				controllers.User.listFeeds
 GET		/user/mark-read 				controllers.User.markRead
 GET		/user/mark-unread 				controllers.User.markUnread
-GET		/user/save-options 				controllers.User.saveOptions
+POST	/user/save-options 				controllers.User.saveOptions
 GET		/user/set-star 					controllers.User.setStar
 GET		/user/upload-opml 				controllers.User.uploadOPML
 GET		/user/charge 					controllers.User.charge
@@ -46,6 +39,18 @@ GET		/admin/feed 					controllers.Application.default
 GET		/admin/subhub 					controllers.Application.default
 GET		/admin/stats 					controllers.Application.default
 GET		/admin/update-feed 				controllers.Application.default
+
+# Login page
+GET     /login                      securesocial.controllers.LoginPage.login
+GET     /logout                     securesocial.controllers.LoginPage.logout
+
+# Providers entry points
+GET     /authenticate/:provider     securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
+POST    /authenticate/:provider     securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
+GET     /not-authorized             securesocial.controllers.ProviderController.notAuthorized
+
+
+
 
 
 	

@@ -94,25 +94,6 @@ object UserOpml{
   
 }
 
-case class Story(
-    id:String,
-    title:String,
-    link:String,
-    created:Date,
-    published:Date,
-    updated:Date,
-    author:String,
-    summary:String,
-    mediaContent:String,
-    content:String
-)
-
-object Story{
-  var stories = Set(
-      Story("S1", "S1", "http://s1.com", new Date, new Date, new Date, "a1", "there", "m1", "there is a well")
-  )
-  def findAll = this.stories.toList.sortBy( _.id )
-}
 
     
     

@@ -70,7 +70,25 @@ object User extends Controller{
   }
   
   def getFeed = Action{ request =>
-    NotImplemented
+    val result = """
+    {
+		"Cursor":"PAGE1",
+		"Stories":[
+				{"Id":"http://flex1.com/blog/entry1","Title":"Title1","Link":"http://flex1.com/blog/entry1","Created":"2014-03-03 00:00:00", "Published":"2014-03-03 00:00:00", 
+				 "Updated":"2014-03-03 00:00:00", "Date":"2014-03-03 00:00:00", "Author":"A1", "Summary":"S1",  "content":"C1" },
+				{"Id":"http://flex1.com/blog/entry2","Title":"Title1","Link":"http://flex1.com/blog/entry2","Created":"2014-03-03 00:00:00", "Published":"2014-03-03 00:00:00", 
+				 "Updated":"2014-03-03 00:00:00", "Date":"2014-03-03 00:00:00", "Author":"A1", "Summary":"S1",  "content":"C1" },
+				{"Id":"http://flex1.com/blog/entry3","Title":"Title1","Link":"http://flex1.com/blog/entry3","Created":1395842385, "Published":1395842385, 
+				 "Updated":1395842385, "Date":1395842385, "Author":"A1", "Summary":"S1",  "content":"C1" } //TIME IN EPOCH TODO: AGO
+		],
+		"Stars":{
+			"http://flex1.com/blog/entry1":"2014-03-03",
+			"http://flex1.com/blog/entry2":"2014-03-03",
+			"http://flex1.com/blog/entry3":"2014-03-03"
+		}
+	}
+	"""
+	Ok( result ).as("application/json")
   }
   
   def importOPML = Action{ request =>
@@ -150,7 +168,8 @@ object User extends Controller{
   }  
   
   def saveOptions = Action{ request =>
-    NotImplemented
+    //options:{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}
+	Ok("")
   }
   
   def setStar = Action{ request =>
