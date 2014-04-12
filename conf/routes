@@ -11,25 +11,27 @@ GET		/tasks/update-feed 				controllers.Application.default
 GET		/tasks/update-feeds 			controllers.Application.default
 GET		/tasks/delete-old-feeds 		controllers.Application.default
 GET		/tasks/delete-old-feed 			controllers.Application.default
-GET		/user/add-subscription 			controllers.User.addSubscription
-GET		/user/delete-account 			controllers.User.deleteAccount
-GET		/user/export-opml 				controllers.User.exportOPML
-GET		/user/feed-history 				controllers.User.feedHistory
-POST	/user/get-contents 				controllers.User.getContents
-GET		/user/get-fee 					controllers.User.getFee
-GET		/user/get-feed 					controllers.User.getFeed
-GET		/user/get-stars 				controllers.User.getStars
-GET		/user/import/opml 				controllers.User.importOPML
-GET		/user/list-feeds 				controllers.User.listFeeds
-POST	/user/list-feeds 				controllers.User.listFeeds
-GET		/user/mark-read 				controllers.User.markRead
-GET		/user/mark-unread 				controllers.User.markUnread
-POST	/user/save-options 				controllers.User.saveOptions
-GET		/user/set-star 					controllers.User.setStar
-GET		/user/upload-opml 				controllers.User.uploadOPML
-GET		/user/charge 					controllers.User.charge
-GET		/user/account 					controllers.User.account
-GET		/user/uncheckout 				controllers.User.unCheckout
+GET		/user/add-subscription 			controllers.UserController.addSubscription( url )
+GET		/user/delete-account 			controllers.UserController.deleteAccount
+GET		/user/export-opml 				controllers.UserController.exportOPML
+POST	/user/import-opml 				controllers.UserController.importOPML
+POST	/user/upload-opml 				controllers.UserController.uploadOPML( opml )
+GET		/user/feed-history 				controllers.UserController.feedHistory
+POST	/user/get-contents 				controllers.UserController.getContents
+GET		/user/get-fee 					controllers.UserController.getFee
+GET		/user/get-feed 					controllers.UserController.getFeed
+GET		/user/get-stars 				controllers.UserController.getStars
+
+GET		/user/list-feeds 				controllers.UserController.listFeeds
+POST	/user/list-feeds 				controllers.UserController.listFeeds
+GET		/user/mark-read 				controllers.UserController.markRead
+GET		/user/mark-unread 				controllers.UserController.markUnread
+POST	/user/save-options 				controllers.UserController.saveOptions
+GET		/user/set-star 					controllers.UserController.setStar
+
+GET		/user/charge 					controllers.UserController.charge
+GET		/user/account 					controllers.UserController.account
+GET		/user/uncheckout 				controllers.UserController.unCheckout
 
 GET		/admin/all-feeds 				controllers.Application.default
 GET		/admin/all-feeds-opml 			controllers.Application.default

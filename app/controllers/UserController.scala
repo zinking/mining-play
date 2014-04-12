@@ -2,32 +2,31 @@ package controllers
 
 import play.api._
 import play.api.mvc._
-import models.Opml
-import models.Story
-import models.Feed
-import play.libs.Json
+import securesocial.core.{IdentityId, UserService, Identity, Authorization}
+import models.User
+import models.WithProvider
+import models.WithProvider
+import mining.io.slick._
+import mining.io.Opml
+import javax.sql.rowset.serial.SerialBlob
+import mining.io.OpmlStorage
+import java.io.FileInputStream
+import org.apache.commons.io.FileUtils
+import play.api.libs.json
+import play.api.libs.json._
+import mining.io.OpmlOutline
 
-object User extends Controller{
+object UserController extends Controller with securesocial.core.SecureSocial {
+  System.setProperty("runMode", "test")
+  val userDAO = SlickUserDAO(H2Driver)
+  val feedDAO = SlickFeedDAO(H2Driver)
+
   
-  def loginGoogle = Action{ request =>
-    NotImplemented
-  }
+
   
-  def addSubscription = Action{ request =>
-    NotImplemented
-  }
+
   
-  def deleteAccount = Action{ request =>
-    NotImplemented
-  }
-  
-  def exportOPML = Action{ request =>
-    NotImplemented
-  }
-  
-  def feedHistory = Action{ request =>
-    NotImplemented
-  }
+
   
   def getContents = Action{ request =>
     val result = """
@@ -91,9 +90,7 @@ object User extends Controller{
 	Ok( result ).as("application/json")
   }
   
-  def importOPML = Action{ request =>
-    NotImplemented
-  }
+
   
   def listFeeds = Action{ request =>
     //NotImplemented
@@ -172,11 +169,84 @@ object User extends Controller{
 	Ok("")
   }
   
-  def setStar = Action{ request =>
-    NotImplemented
+  def setStar = UserAwareAction { request =>
+    request.user match {
+      case Some(user) => {
+          Ok( "1" ).as("text/html")
+      }
+    }
+    NotFound
   }
   
-  def uploadOPML = Action{ request =>
+  def addSubscription( url:String) = UserAwareAction { request =>
+    //1. update the feed in the system
+    //2. record the feed in user's inventory
+    request.user match {
+      case Some(user) => {
+    	  val feedp = feedDAO.createOrUpdateFeed(url)
+    	  userDAO.addOmplOutline( feedp.feed )
+          Ok( Json.toJson(
+        		  Map( "data"-> "Subscripton Added" )
+              ) ).as("application/json")
+      }
+    }
+    NotFound
+  }
+  
+  def exportOPML = UserAwareAction { request =>
+    request.user match {
+      case Some(user) => {
+    	  val opml = userDAO.getOpmlById( user.email.get ).get
+          Ok( opml.toXml ).as("text/html")
+      }
+    }
+    NotFound
+  }
+  
+  //this method deals with file input
+  def importOPML = UserAwareAction(parse.multipartFormData) { implicit request =>
+    request.user match {
+      case Some(user) => {
+         request.body.file("file").map{ opmlfile =>
+            val bb = new SerialBlob( FileUtils.readFileToByteArray( opmlfile.ref.file ) )
+         	val os = new OpmlStorage( user.email.get, bb )
+            userDAO.saveOpmlStorage(os)
+            Ok( "1" ).as("application/json")
+         }
+      }
+    }
+    NotFound
+  }
+  
+  //this method deals with json input
+  //POST opml=>jsonstring
+  def uploadOPML( opml:String) = UserAwareAction { request =>
+    def JsObject2OpmlOutline(  children:List[OpmlOutline],node:JsObject):OpmlOutline = {
+      new OpmlOutline(children,  (node\"title").as[String], (node\"xmlUrl").as[String], 
+        (node\"type").as[String], (node\"text").as[String], (node\"htmlUrl").as[String])
+    }
+     request.user match {
+      case Some(user) => {
+         val feedlist = Json.parse(opml).as[List[JsObject]]
+         val result = feedlist.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc, node ) =>{
+	    	val outline2 = (node \ "Outline").as[List[JsObject]]
+	    	val result2 = outline2.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc2, node2 ) =>{
+	    		val nid2 = JsObject2OpmlOutline( List[OpmlOutline](), node2 )
+	    		acc2 :+ nid2
+	    	})
+	    	val nid = JsObject2OpmlOutline(result2, node )
+	        acc :+ nid
+	     })
+	     val opmlresult = Opml(user.email.get, result)
+	     userDAO.saveOpml( opmlresult )
+         Ok( "1" ).as("application/json")
+      }
+    }
+    NotFound
+  }
+  
+  /*NOT GOING TO BE IMPLEMENTED */
+  def feedHistory = Action{ request =>
     NotImplemented
   }
   
@@ -190,6 +260,10 @@ object User extends Controller{
   
   def unCheckout = Action{ request =>
     NotImplemented
-  }    
+  }
+  
+  def deleteAccount = Action{ request =>
+    NotImplemented
+  }
   
 }

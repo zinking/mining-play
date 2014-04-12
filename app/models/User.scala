@@ -7,6 +7,8 @@ import mining.util.DirectoryUtil
 import scala.collection.mutable.ListBuffer
 import play.libs.Json
 import com.fasterxml.jackson.databind.JsonNode
+import securesocial.core.Authorization
+import securesocial.core.{IdentityId, UserService, Identity, Authorization}
 
 
 case class User (
@@ -24,74 +26,14 @@ object User{
   def findAll = this.users.toList.sortBy( _.email )
 }
 
-case class OpmlOutline(
-    outline:ListBuffer[OpmlOutline] = new ListBuffer[OpmlOutline],
-    title:String,
-    xmlUrl:String,
-    outlineType:String,
-    text:String,
-    htmlUrl:String
-){
-  def addOutline( o:OpmlOutline){
-    outline += o
+
+
+
+// An Authorization implementation that only authorizes uses that logged in using twitter
+case class WithProvider(provider: String) extends Authorization {
+  def isAuthorized(user: Identity) = {
+    user.identityId.providerId == provider
   }
-}
-
-case class Opml(
-    xmlName:String,
-    version:String,
-    title:String,
-    outline:Seq[OpmlOutline]
-)
-
-object Opml{
-	def loadSampleOpml():Array[OpmlOutline]={
-		val tmpPath = DirectoryUtil.pathFromProject("conf", "user_opml.xml")
-		val xml = XML.loadFile(tmpPath)
-		
-		val outlineSeq = xml \\ "outline"
-		val outlineMap:scala.collection.mutable.Map[String, OpmlOutline] = scala.collection.mutable.Map.empty
-		
-		println( outlineSeq.length )
-		
-		// First pass, create all outline
-		for {
-		  outline <- outlineSeq
-		  xmlurl  <- (outline \ "@xmlUrl")
-		  title   <- (outline \ "@title") 
-		  type1   <- (outline \ "@type")  
-		  text    <- (outline \ "@text")  
-		  htmlurl <- (outline \ "@htmlUrl")    
-		} outlineMap(xmlurl.toString + title.toString ) = new OpmlOutline(
-		    null,title.toString,xmlurl.toString,type1.toString,text.toString,htmlurl.toString
-		)
-		
-		// Second pass, assign children
-		for {
-		  outline    <- outlineSeq
-		  xmlurl     <- (outline \ "@xmlUrl")
-		  title      <- (outline \ "@title" ) 
-		  suboutline <- (outline \ "outline")
-		  subxmlurl  <- (outline \ "@xmlUrl")
-		  subtitle   <- (outline \ "@title" ) 
-		} outlineMap(xmlurl.toString + title.toString).addOutline(
-		    outlineMap(subxmlurl.toString + subtitle.toString)
-		)
-		
-		println(outlineMap.size)
-		
-		outlineMap.values.toArray
-	  
-	}
-}
-
-case class UserOpml(
-    id:String,
-    opml:Seq[Byte]
-)
-
-object UserOpml{
-  
 }
 
 
