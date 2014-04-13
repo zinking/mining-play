@@ -20,7 +20,7 @@ object Application extends Controller with securesocial.core.SecureSocial {
       case user: Identity => {
         reader = new User("1", user.email.getOrElse(""), new Date, 1, new Date)
       }
-      case _ => //TODO: log error/thow exception
+      case _ => ??? //TODO: log error/thow exception
     }
     
     Ok( views.html.index( reader ,stripekey,msgs,role) )

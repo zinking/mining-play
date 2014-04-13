@@ -17,17 +17,16 @@ GET		/user/export-opml 				controllers.UserController.exportOPML
 POST	/user/import-opml 				controllers.UserController.importOPML
 POST	/user/upload-opml 				controllers.UserController.uploadOPML( opml )
 GET		/user/feed-history 				controllers.UserController.feedHistory
-POST	/user/get-contents 				controllers.UserController.getContents
+POST	/user/get-contents 				controllers.UserController.getContents( data )
 GET		/user/get-fee 					controllers.UserController.getFee
-GET		/user/get-feed 					controllers.UserController.getFeed
-GET		/user/get-stars 				controllers.UserController.getStars
+GET		/user/get-feed 					controllers.UserController.getFeed( f, c )
+GET		/user/get-stars 				controllers.UserController.getStars( c )
 
 GET		/user/list-feeds 				controllers.UserController.listFeeds
-POST	/user/list-feeds 				controllers.UserController.listFeeds
 GET		/user/mark-read 				controllers.UserController.markRead
 GET		/user/mark-unread 				controllers.UserController.markUnread
-POST	/user/save-options 				controllers.UserController.saveOptions
-GET		/user/set-star 					controllers.UserController.setStar
+POST	/user/save-options 				controllers.UserController.saveOptions( options )
+GET		/user/set-star 					controllers.UserController.setStar( feed, story, del )
 
 GET		/user/charge 					controllers.UserController.charge
 GET		/user/account 					controllers.UserController.account

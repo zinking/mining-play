@@ -7,153 +7,150 @@ import models.User
 import models.WithProvider
 import models.WithProvider
 import mining.io.slick._
-import mining.io.Opml
+import mining.io._
 import javax.sql.rowset.serial.SerialBlob
 import mining.io.OpmlStorage
 import java.io.FileInputStream
 import org.apache.commons.io.FileUtils
 import play.api.libs.json
 import play.api.libs.json._
-import mining.io.OpmlOutline
 
 object UserController extends Controller with securesocial.core.SecureSocial {
   System.setProperty("runMode", "test")
   val userDAO = SlickUserDAO(H2Driver)
   val feedDAO = SlickFeedDAO(H2Driver)
-
   
-
-  
-
-  
-
-  
-  def getContents = Action{ request =>
-    val result = """
-    {
-		"Id":"http://flex3.com/blog/entry1",
-		"Content":"lorem posuoi akldj;falkjsdlfjal;kdsjflkajldkjfalk;sdj;fajklsdj;fakdsl"
-	}
-	"""
-	Ok( result ).as("application/json")
-  }
-  
-  def getFee = Action{ request =>
-    NotImplemented
-  }
-  
-  def getStars = Action{ request =>
-    //-c GAE feature to fetch next 20 items
-	val result = """
-    {
-		"Cursor":"PAGE1",
-		"Stories":{
-			"http://flex1.com/rss":[
-				{"Id":"http://flex1.com/blog/entry1","Title":"Title1","Link":"http://flex1.com/blog/entry1","Created":"2014-03-03", "Published":"2014-03-03", 
-				 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-				{"Id":"http://flex1.com/blog/entry2","Title":"Title1","Link":"http://flex1.com/blog/entry2","Created":"2014-03-03", "Published":"2014-03-03", 
-				 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-				{"Id":"http://flex1.com/blog/entry3","Title":"Title1","Link":"http://flex1.com/blog/entry3","Created":"2014-03-03", "Published":"2014-03-03", 
-				 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
-			]
-		},
-		"Stars":{
-			"http://flex1.com/blog/entry1":"2014-03-03",
-			"http://flex1.com/blog/entry2":"2014-03-03",
-			"http://flex1.com/blog/entry3":"2014-03-03"
-		}
-	}
-	"""
-	Ok( result ).as("application/json")
-	
-  }
-  
-  def getFeed = Action{ request =>
-    val result = """
-    {
-		"Cursor":"PAGE1",
-		"Stories":[
-				{"Id":"http://flex1.com/blog/entry1","Title":"Title1","Link":"http://flex1.com/blog/entry1","Created":"2014-03-03 00:00:00", "Published":"2014-03-03 00:00:00", 
-				 "Updated":"2014-03-03 00:00:00", "Date":"2014-03-03 00:00:00", "Author":"A1", "Summary":"S1",  "content":"C1" },
-				{"Id":"http://flex1.com/blog/entry2","Title":"Title1","Link":"http://flex1.com/blog/entry2","Created":"2014-03-03 00:00:00", "Published":"2014-03-03 00:00:00", 
-				 "Updated":"2014-03-03 00:00:00", "Date":"2014-03-03 00:00:00", "Author":"A1", "Summary":"S1",  "content":"C1" },
-				{"Id":"http://flex1.com/blog/entry3","Title":"Title1","Link":"http://flex1.com/blog/entry3","Created":1395842385, "Published":1395842385, 
-				 "Updated":1395842385, "Date":1395842385, "Author":"A1", "Summary":"S1",  "content":"C1" } //TIME IN EPOCH TODO: AGO
-		],
-		"Stars":{
-			"http://flex1.com/blog/entry1":"2014-03-03",
-			"http://flex1.com/blog/entry2":"2014-03-03",
-			"http://flex1.com/blog/entry3":"2014-03-03"
-		}
-	}
-	"""
-	Ok( result ).as("application/json")
-  }
-  
-
-  
-  def listFeeds = Action{ request =>
-    //NotImplemented
-	//MEDIA COTENT is really intended for media
-    val result = """
-    {
-      "Opml":[
-	    {"Title":"FolderFlex",  "Type":"rss", "Outline":[
-			{"Title":"Flex Title1", "XmlUrl":"http://flex1.com/rss", "Type":"rss", "Text":"FLEX TEXT T1", "HtmlUrl":"http://flex1.com/", "Outline":[] },
-			{"Title":"Flex Title2", "XmlUrl":"http://flex2.com/rss", "Type":"rss", "Text":"FLEX TEXT T2", "HtmlUrl":"http://flex2.com/", "Outline":[] },
-			{"Title":"Flex Title3", "XmlUrl":"http://flex3.com/rss", "Type":"rss", "Text":"FLEX TEXT T3", "HtmlUrl":"http://flex3.com/", "Outline":[] },
-			{"Title":"Flex Title4", "XmlUrl":"http://flex4.com/rss", "Type":"rss", "Text":"FLEX TEXT T4", "HtmlUrl":"http://flex4.com/", "Outline":[] }] },
-			
-		{"Title":"Silver Title1", "XmlUrl":"http://Silver1.com/rss", "Type":"rss", "Text":"Silver TEXT T1", "HtmlUrl":"http://Silver1.com/", "Outline":[] }
-      ],
-      "Stories":{
-		"http://flex1.com/rss":[
-			{"Id":"http://flex1.com/blog/entry1","Title":"Title1","Link":"http://flex1.com/blog/entry1","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex1.com/blog/entry2","Title":"Title1","Link":"http://flex1.com/blog/entry2","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex1.com/blog/entry3","Title":"Title1","Link":"http://flex1.com/blog/entry3","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
-		],
-		"http://flex2.com/rss":[
-			{"Id":"http://flex2.com/blog/entry1","Title":"Title1","Link":"http://flex2.com/blog/entry1","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex2.com/blog/entry2","Title":"Title1","Link":"http://flex2.com/blog/entry2","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex2.com/blog/entry3","Title":"Title1","Link":"http://flex2.com/blog/entry3","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
-		],
-		"http://flex3.com/rss":[
-			{"Id":"http://flex3.com/blog/entry1","Title":"Title1","Link":"http://flex3.com/blog/entry1","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex3.com/blog/entry2","Title":"Title1","Link":"http://flex3.com/blog/entry2","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" },
-			{"Id":"http://flex3.com/blog/entry3","Title":"Title1","Link":"http://flex3.com/blog/entry3","Created":"2014-03-03", "Published":"2014-03-03", 
-			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
-		]
-	  },
-      "Feeds":[
-		{"Title":"Flex Title1", "Url":"http://flex1.com/rss", "Type":"rss", "Text":"FLEX TEXT T1",  "Image":"http://www.favicon.co.uk/ico/3908.png",
-			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" },
-		{"Title":"Flex Title2", "Url":"http://flex2.com/rss", "Type":"rss", "Text":"FLEX TEXT T2",  
-			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" },
-		{"Title":"Flex Title3", "Url":"http://flex3.com/rss", "Type":"rss", "Text":"FLEX TEXT T3",  
-			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" },
-		{"Title":"Flex Title4", "Url":"http://flex4.com/rss", "Type":"rss", "Text":"FLEX TEXT T4",  "Image":"http://www.favicon.co.uk/ico/4771.png",
-			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" }
-       ],
-	   "Stars":[
-		"http://flex1.com/blog/entry1",
-		"http://flex2.com/blog/entry1",
-		"http://flex3.com/blog/entry1"
-	   ],
-      "UnreadDate":"2014-03-24",
-      "UntilDate":"2014-08-24"
+  def getContents( data:String ) = UserAwareAction { request => 
+    //INPUT: LIST{Feed:xmlurl,Story:Id}
+    request.user match {
+      case Some(user) => {
+        val jcontents = Json.parse(data).as[List[JsObject]]
+        val storyContents = jcontents.map( ri =>
+            JsObject(
+                "Id"->(ri\"Id").as[JsString]::
+                "Content"->feedDAO.getStoryContentById( (ri\"Feed").as[JsString] )::
+                Nil
+                )
+            )
+          Ok( "1" ).as("text/html")
+      }
     }
-    """
+    NotFound
+  }
+
+   def getFeed( c:String ) = UserAwareAction { request => 
+   //get star stories of a user, with cursor/offset
+    request.user match {
+      case Some(user) => {
+        val uid = user.email.get
+        val stars = userDAO.getUserStarStories(uid)
+        val starStories = stars.map( feedDAO.getStoryById(_.storyId))
+
+         Ok( Json.toJson(
+        		  Map( 
+        		      "Cursor"  -> JsString(c),
+        		      "Stories" -> Json.toJson( starStories.map( Story2JsObject(_))),
+        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		  )
+              ) ).as("application/json")
+      }
+    }
+    NotFound
+  }
+  
+ def getFeed( f:String, c:String ) = UserAwareAction { request => 
+   //get stories of a feed, with cursor/offset
+    request.user match {
+      case Some(user) => {
+        val uid = user.email.get
+        val stories = feedDAO.getFeedStories(f) //Question here is how is user's read/unread info dealt with
+        val stars = userDAO.getUserStarStories(uid)
+	     
+         Ok( Json.toJson(
+        		  Map( 
+        		      "Cursor"  -> JsString(c),
+        		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
+        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		  )
+              ) ).as("application/json")
+      }
+    }
+    NotFound
+  }
+
+    def OpmlOutline2JsObject(  children:List[JsObject],node:OpmlOutline):JsObject = {
+      new JsObject(
+		      "Title"->JsString(node.title )::
+		      "XmlUrl" ->JsString(node.xmlUrl)::
+		      "Type" -> JsString(node.outlineType)::
+		      "Text" -> JsString(node.text)::
+		      "HtmlUrl" -> JsString(node.htmlUrl)::
+		      "Outline"-> JsArray(children)::
+		      Nil
+		  )
+	}
+    /*
+    {"Id":"http://flex1.com/blog/entry3","Title":"Title1","Link":"http://flex1.com/blog/entry3","Created":"2014-03-03", "Published":"2014-03-03", 
+			 "Updated":"2014-03-03", "Date":"2014-03-03", "Author":"A1", "Summary":"S1", "MediaContent":"MC1", "content":"C1" }
+    */
+    def Story2JsObject ( node:Story):JsObject = {
+      new JsObject(
+    		  "Id"->JsString(node.link)::
+    		  "Title"->JsString(node.title)::
+    		  "Link"->JsString(node.link)::
+    		  "Updated"->JsString(node.updated.toString)::
+    		  "Date"->JsString(node.published.toString)::
+    		  "Author"->JsString(node.author)::
+    		  "Summary"->JsString(node.description)::
+    		  "Content"->JsString(node.content)::
+    		  Nil
+          )
+    }
     
-    
-    Ok( result ).as("application/json")
+    /*
+    {"Title":"Flex Title1", "Url":"http://flex1.com/rss", "Type":"rss", "Text":"FLEX TEXT T1",  "Image":"http://www.favicon.co.uk/ico/3908.png",
+			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" },
+    */
+    def Feed2JsObject( node:OpmlOutline):JsObject={
+      new JsObject(
+    		  "Title"->JsString(node.title)::
+    		  "Url"->JsString(node.xmlUrl)::
+    		  "Type"->JsString(node.outlineType)::
+    		  "Text"->JsString(node.text)::
+    		  Nil
+          )
+    }
+  
+  def listFeeds = UserAwareAction { request => 
+    request.user match {
+      case Some(user) => {
+        val uid = user.email.get
+        val opml = userDAO.getOpmlById( uid )
+    	  val opmllist = opml.outline.foldLeft[List[JsObject]]( List[JsObject]() )(( acc, node ) =>{
+	    	val subOutlines = outlines.outline
+	    	val subopmllist = outline2.foldLeft[List[JsObject]]( List[JsObject]() )(( acc2, node2 ) =>{
+	    		val nid2 = OpmlOutline2JsObject( List[JsObject](), node2 )
+	    		acc2 :+ nid2
+	    	})
+	    	val nid = JsObject2OpmlOutline(subopmllist, node )
+	        acc :+ nid
+	     })
+	     
+	     val stories = feedDAO.getOpmlStories(opml)
+	     val feeds = opml.allFeeds
+	     val stars = userDAO.getUserStarStories(uid)
+	     
+         Ok( Json.toJson(
+        		  Map( 
+        		      "Opml"    -> opmllist,
+        		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
+        		      "feeds"   -> Json.toJson( feeds.map( Feed2JsObject(_)) ),
+        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		  )
+              ) ).as("application/json")
+      }
+    }
+    NotFound
   }
   
   def markRead = Action{ request =>
@@ -164,15 +161,32 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotImplemented
   }  
   
-  def saveOptions = Action{ request =>
-    //options:{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}
-	Ok("")
+  def saveOptions( options:String ) = UserAwareAction { request =>
+    //INPUT options:{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}
+	request.user match {
+      case Some(user) => {
+        val joptions = Json.parse(options).as[JsObject]
+        val setting = Setting( user.email.get, (joptions\"sort").as[String] , 
+        				(joptions\"mode").as[String] ,(joptions\"hideEmpty").as[String] )
+        userDAO.saveUserSetting( setting )
+        Ok( "1" ).as("application/json")
+      }
+    }
+    NotFound
   }
   
-  def setStar = UserAwareAction { request =>
+  def setStar( feed:String, story:String, del:String ) = UserAwareAction { request => 
+    //INPUT {feed:xmlUrl, story:storyId, del: '' : '1' //TODO: I don't like these magic numbers, they should be adapted to meaningful things
     request.user match {
       case Some(user) => {
-          Ok( "1" ).as("text/html")
+          val uid = user.email.get
+          userDAO.setUserStarStory( uid, story,  
+        		  del match{
+			        case "" => ""
+			        case "1" => "STAR"
+			      }
+              )
+          Ok( "1" ).as("application/json")
       }
     }
     NotFound
@@ -218,13 +232,14 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
   
+  def JsObject2OpmlOutline(  children:List[OpmlOutline],node:JsObject):OpmlOutline = {
+	  new OpmlOutline(children,  (node\"title").as[String], (node\"xmlUrl").as[String], 
+	    (node\"type").as[String], (node\"text").as[String], (node\"htmlUrl").as[String])
+	}
   //this method deals with json input
   //POST opml=>jsonstring
   def uploadOPML( opml:String) = UserAwareAction { request =>
-    def JsObject2OpmlOutline(  children:List[OpmlOutline],node:JsObject):OpmlOutline = {
-      new OpmlOutline(children,  (node\"title").as[String], (node\"xmlUrl").as[String], 
-        (node\"type").as[String], (node\"text").as[String], (node\"htmlUrl").as[String])
-    }
+    
      request.user match {
       case Some(user) => {
          val feedlist = Json.parse(opml).as[List[JsObject]]
@@ -263,6 +278,10 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   }
   
   def deleteAccount = Action{ request =>
+    NotImplemented
+  }
+  
+  def getFee = Action{ request =>
     NotImplemented
   }
   

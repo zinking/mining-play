@@ -5,8 +5,6 @@ import scala.xml.XML
 import scala.xml.Elem
 import mining.util.DirectoryUtil
 import scala.collection.mutable.ListBuffer
-import play.libs.Json
-import com.fasterxml.jackson.databind.JsonNode
 import securesocial.core.Authorization
 import securesocial.core.{IdentityId, UserService, Identity, Authorization}
 
@@ -25,6 +23,7 @@ object User{
   )
   def findAll = this.users.toList.sortBy( _.email )
 }
+
 
 
 
