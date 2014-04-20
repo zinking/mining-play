@@ -5,7 +5,7 @@ import play.api.mvc._
 import securesocial.core.{IdentityId, UserService, Identity, Authorization}
 import models.User
 import models.WithProvider
-import models.WithProvider
+import scala.slick.driver.H2Driver
 import mining.io.slick._
 import mining.io._
 import javax.sql.rowset.serial.SerialBlob
@@ -20,15 +20,16 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   val userDAO = SlickUserDAO(H2Driver)
   val feedDAO = SlickFeedDAO(H2Driver)
   
-  def getContents( data:String ) = UserAwareAction { request => 
+  def getContents(  ) = UserAwareAction { request => 
     //INPUT: LIST{Feed:xmlurl,Story:Id}
+    val data = request.getQueryString("data").get
     request.user match {
       case Some(user) => {
-        val jcontents = Json.parse(data).as[List[JsObject]]
+        val jcontents = Json.parse(data).as[Seq[JsObject]]
         val storyContents = jcontents.map( ri =>
             JsObject(
                 "Id"->(ri\"Id").as[JsString]::
-                "Content"->feedDAO.getStoryContentById( (ri\"Feed").as[JsString] )::
+                "Content"->JsString( feedDAO.getStoryContentById( (ri\"Feed").as[String] ) )::
                 Nil
                 )
             )
@@ -38,13 +39,14 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
 
-   def getFeed( c:String ) = UserAwareAction { request => 
+   def getStars(  ) = UserAwareAction { request => 
    //get star stories of a user, with cursor/offset
+    val c = request.getQueryString("c").get
     request.user match {
       case Some(user) => {
         val uid = user.email.get
         val stars = userDAO.getUserStarStories(uid)
-        val starStories = stars.map( feedDAO.getStoryById(_.storyId))
+        val starStories = stars.map( feedDAO.getStoryById(_))
 
          Ok( Json.toJson(
         		  Map( 
@@ -58,10 +60,13 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
   
- def getFeed( f:String, c:String ) = UserAwareAction { request => 
+ def getFeed(  ) = UserAwareAction { request => 
    //get stories of a feed, with cursor/offset
+
     request.user match {
       case Some(user) => {
+        val c = request.getQueryString("c").get
+        val f = request.getQueryString("f").get
         val uid = user.email.get
         val stories = feedDAO.getFeedStories(f) //Question here is how is user's read/unread info dealt with
         val stars = userDAO.getUserStarStories(uid)
@@ -74,6 +79,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )
               ) ).as("application/json")
       }
+      
     }
     NotFound
   }
@@ -125,14 +131,14 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     request.user match {
       case Some(user) => {
         val uid = user.email.get
-        val opml = userDAO.getOpmlById( uid )
+        val opml = userDAO.getOpmlById( uid ).get
     	  val opmllist = opml.outline.foldLeft[List[JsObject]]( List[JsObject]() )(( acc, node ) =>{
-	    	val subOutlines = outlines.outline
-	    	val subopmllist = outline2.foldLeft[List[JsObject]]( List[JsObject]() )(( acc2, node2 ) =>{
+	    	val subOutlines = node.outline
+	    	val subopmllist = subOutlines.foldLeft[List[JsObject]]( List[JsObject]() )(( acc2, node2 ) =>{
 	    		val nid2 = OpmlOutline2JsObject( List[JsObject](), node2 )
 	    		acc2 :+ nid2
 	    	})
-	    	val nid = JsObject2OpmlOutline(subopmllist, node )
+	    	val nid = OpmlOutline2JsObject(subopmllist, node )
 	        acc :+ nid
 	     })
 	     
@@ -142,7 +148,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	     
          Ok( Json.toJson(
         		  Map( 
-        		      "Opml"    -> opmllist,
+        		      "Opml"    -> Json.toJson( opmllist ),
         		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
         		      "feeds"   -> Json.toJson( feeds.map( Feed2JsObject(_)) ),
         		      "stars"   -> Json.toJson( stars.map( JsString(_)))
@@ -161,8 +167,9 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotImplemented
   }  
   
-  def saveOptions( options:String ) = UserAwareAction { request =>
+  def saveOptions(  ) = UserAwareAction { request =>
     //INPUT options:{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}
+    val options = request.getQueryString("options").get
 	request.user match {
       case Some(user) => {
         val joptions = Json.parse(options).as[JsObject]
@@ -175,11 +182,16 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
   
-  def setStar( feed:String, story:String, del:String ) = UserAwareAction { request => 
+  def setStar(  ) = UserAwareAction { request => 
     //INPUT {feed:xmlUrl, story:storyId, del: '' : '1' //TODO: I don't like these magic numbers, they should be adapted to meaningful things
+    val data = request.getQueryString("data").get
     request.user match {
       case Some(user) => {
           val uid = user.email.get
+          val dict = Json.parse(data).as[JsObject]
+          val feed = (dict\"feed").as[String]
+          val story = (dict\"story").as[String]
+          val del  = (dict\"del").as[String]
           userDAO.setUserStarStory( uid, story,  
         		  del match{
 			        case "" => ""
@@ -192,13 +204,15 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
   
-  def addSubscription( url:String) = UserAwareAction { request =>
+  def addSubscription( ) = UserAwareAction { request =>
     //1. update the feed in the system
     //2. record the feed in user's inventory
+    val url = request.getQueryString("url").get
     request.user match {
       case Some(user) => {
     	  val feedp = feedDAO.createOrUpdateFeed(url)
-    	  userDAO.addOmplOutline( feedp.feed )
+    	  val uid = user.email.get
+    	  userDAO.addOmplOutline( uid, feedp.feed.outline )
           Ok( Json.toJson(
         		  Map( "data"-> "Subscripton Added" )
               ) ).as("application/json")
@@ -238,8 +252,8 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	}
   //this method deals with json input
   //POST opml=>jsonstring
-  def uploadOPML( opml:String) = UserAwareAction { request =>
-    
+  def uploadOPML( ) = UserAwareAction { request =>
+      val opml = request.getQueryString("opml").get
      request.user match {
       case Some(user) => {
          val feedlist = Json.parse(opml).as[List[JsObject]]

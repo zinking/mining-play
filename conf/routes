@@ -11,22 +11,22 @@ GET		/tasks/update-feed 				controllers.Application.default
 GET		/tasks/update-feeds 			controllers.Application.default
 GET		/tasks/delete-old-feeds 		controllers.Application.default
 GET		/tasks/delete-old-feed 			controllers.Application.default
-GET		/user/add-subscription 			controllers.UserController.addSubscription( url )
+GET		/user/add-subscription 			controllers.UserController.addSubscription
 GET		/user/delete-account 			controllers.UserController.deleteAccount
 GET		/user/export-opml 				controllers.UserController.exportOPML
 POST	/user/import-opml 				controllers.UserController.importOPML
-POST	/user/upload-opml 				controllers.UserController.uploadOPML( opml )
+POST	/user/upload-opml 				controllers.UserController.uploadOPML
 GET		/user/feed-history 				controllers.UserController.feedHistory
-POST	/user/get-contents 				controllers.UserController.getContents( data )
+POST	/user/get-contents 				controllers.UserController.getContents
 GET		/user/get-fee 					controllers.UserController.getFee
-GET		/user/get-feed 					controllers.UserController.getFeed( f, c )
-GET		/user/get-stars 				controllers.UserController.getStars( c )
+GET		/user/get-feed 					controllers.UserController.getFeed
+GET		/user/get-stars 				controllers.UserController.getStars
 
-GET		/user/list-feeds 				controllers.UserController.listFeeds
+POST	/user/list-feeds 				controllers.UserController.listFeeds
 GET		/user/mark-read 				controllers.UserController.markRead
 GET		/user/mark-unread 				controllers.UserController.markUnread
-POST	/user/save-options 				controllers.UserController.saveOptions( options )
-GET		/user/set-star 					controllers.UserController.setStar( feed, story, del )
+POST	/user/save-options 				controllers.UserController.saveOptions
+GET		/user/set-star 					controllers.UserController.setStar
 
 GET		/user/charge 					controllers.UserController.charge
 GET		/user/account 					controllers.UserController.account
@@ -49,6 +49,9 @@ GET     /logout                     securesocial.controllers.LoginPage.logout
 GET     /authenticate/:provider     securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
 POST    /authenticate/:provider     securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
 GET     /not-authorized             securesocial.controllers.ProviderController.notAuthorized
+
+#removing request params for the moment as it cause incompatible with reverse routing
+#future refactoring work with  http://www.mariussoutier.com/blog/2012/12/10/playframework-routes-part-1-basics/
 
 
 

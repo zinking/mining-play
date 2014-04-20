@@ -15,8 +15,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-testkit" % "2.2.3",
   "junit" % "junit" % "4.10" % "test",
-//  "securesocial" %% "securesocial" % "2.1.1",
+  "commons-io" % "commons-io" % "2.2",
   "org.scalatest" %% "scalatest" % "1.9.1" % "test" 
 )
+
+libraryDependencies ++= Seq("com.typesafe.slick" %% "slick" % "2.0.1",
+                            "com.h2database"     %  "h2"    % "1.3.166") 
 
 

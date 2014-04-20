@@ -1,27 +1,27 @@
 package controllers
 
-import java.io.File
-import java.nio.file.FileSystems
+import controllers.UserController
+import org.specs2.matcher.ShouldMatchers
+import play.api.http.HeaderNames
+import play.api.mvc.{Request, AnyContent}
+import play.api.test.{PlaySpecification, FakeApplication, FakeRequest}
+import securesocial.testkit.WithLoggedUser
 import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.junit.JUnitRunner
-import mining.io.ser.SerFeedWriter
-import mining.io.ser.SerFeedReader
-import mining.io.ser.SerFeedManager
 
 @RunWith(classOf[JUnitRunner])
-class UserSpec extends FunSuite 
-			      with ShouldMatchers 
-			      with BeforeAndAfterAll {
+class UserControllerSpec extends PlaySpecification with ShouldMatchers {
+  import WithLoggedUser._
+  def minimalApp = FakeApplication(withoutPlugins=excludedPlugins,additionalPlugins = includedPlugins)
+  "Access secured index " in new WithLoggedUser(minimalApp) {
 
-  override def beforeAll = {
-    //pass
-  }
+    val req: Request[AnyContent] = FakeRequest().
+      withHeaders((HeaderNames.CONTENT_TYPE, "application/x-www-form-urlencoded")).
+      withCookies(cookie) // Fake cookie from the WithloggedUser trait
 
-  test("User should be able to authenticate via google auth") {
-	  //....
+    val result = Application.index.apply(req)
+
+    val actual: Int= status(result)
+    actual must be equalTo OK
   }
-  
 }
