@@ -1,4 +1,4 @@
-@(user:models.User , stripekey:String, messages:Seq[String], role:Int)
+@(user:models.User, messages:Seq[String])
 <!DOCTYPE html>
 <html lang="en" ng-app="goReadApp">
 <head>
@@ -104,9 +104,7 @@
 						<b class="caret"></b>
 					</a>
 					<ul class="dropdown-menu">
-						@if( stripekey ){ 
 						<li><a href="#" ng-click="getAccount()">account</a></li>
-						}
 						<li><a href="#" ng-click="setAddSubscription()">add subscription</a></li>
 						<li><a href="#" ng-click="shown = 'import-opml'">import opml</a></li>
 						<li class="divider"></li>
@@ -125,7 +123,7 @@
 		</div>
 	</nav>
 	<div class="container">
-		@if( user != null && stripekey ){
+		@if( user != null && false ){
 		<div
 			class="row"
 			ng-show="shown == 'account'"
@@ -133,8 +131,8 @@
 			data-url-charge="@controllers.routes.UserController.charge"
 			data-url-account="@controllers.routes.UserController.account"
 			data-url-uncheckout="@controllers.routes.UserController.unCheckout"
-			data-stripe-key="@stripekey"
-			ng-init="accountType = @user.account"
+			data-stripe-key="nosuchthing"
+			ng-init="accountType = basic"
 			>
 			<div class="col-md-offset-3 col-md-6">
 				<h1>Account</h1>
@@ -203,7 +201,7 @@
 					Or submit to <code>http://www.goread.io/user/add-subscription?url=%s</code> where <code>%s</code> is the feed URL.
 					Firefox users can <a href="#" ng-click="registerHandler()">register go read as an RSS reader</a>.
 				</p>
-				@if(stripekey ){
+				@if(false ){
 				<p>
 					<strong>How much does a paid subscription cost?</strong>
 					Either $3/month or $30/year. A 30-day free trial is provided. Please contact support if you have questions.
@@ -321,7 +319,7 @@
 					</li>
 					<li class="all-subs" ng-show="loading">loading...</li>
 				</ul>
-				@if( stripekey ){
+				@if( false ){
 				<ul class="list-unstyled" ng-show="accountType == 0">
 					<li><button class="btn btn-success" ng-click="getAccount()">upgrade</button></li>
 					<li ng-show="trialRemaining > 0"> TODO: TRAIL REMAINING days remaining of free trial</li>
@@ -598,14 +596,15 @@
 	</script>
 	{{end}} -->
 
-	@if( role==1){
+	<!-- applied on some role  -->
+    @if( false ){
 		<script type="text/javascript">
 			Mousetrap.bind('c', function() {
 				//window.location.replace("{{url "clear-feeds"}}");
 			});
 		</script>
 	}else{ 
-		@if( role == 0 ){
+		@if( false ){
 		<script type="text/javascript">
 			Mousetrap.bind('y', function() {
 				angular.element(document.body).scope().setYesterday();

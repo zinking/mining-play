@@ -20,8 +20,12 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   val userDAO = SlickUserDAO(H2Driver)
   val feedDAO = SlickFeedDAO(H2Driver)
   
+  userDAO.manageDDL
+  feedDAO.manageDDL
+  
   def getContents(  ) = UserAwareAction { request => 
     //INPUT: LIST{Feed:xmlurl,Story:Id}
+    //OUTPUT: LIST{content string}
     val data = request.getQueryString("data").get
     request.user match {
       case Some(user) => {
@@ -33,8 +37,12 @@ object UserController extends Controller with securesocial.core.SecureSocial {
                 Nil
                 )
             )
-          Ok( "1" ).as("text/html")
+            Ok( Json.toJson(
+        		  Map( "data"  -> storyContents  ) 
+        		  )).as("application/json")
       }
+      
+      case _ =>
     }
     NotFound
   }
@@ -47,7 +55,6 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         val uid = user.email.get
         val stars = userDAO.getUserStarStories(uid)
         val starStories = stars.map( feedDAO.getStoryById(_))
-
          Ok( Json.toJson(
         		  Map( 
         		      "Cursor"  -> JsString(c),
@@ -56,13 +63,13 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )
               ) ).as("application/json")
       }
+      case _ =>
     }
     NotFound
   }
   
  def getFeed(  ) = UserAwareAction { request => 
    //get stories of a feed, with cursor/offset
-
     request.user match {
       case Some(user) => {
         val c = request.getQueryString("c").get
@@ -70,7 +77,6 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         val uid = user.email.get
         val stories = feedDAO.getFeedStories(f) //Question here is how is user's read/unread info dealt with
         val stars = userDAO.getUserStarStories(uid)
-	     
          Ok( Json.toJson(
         		  Map( 
         		      "Cursor"  -> JsString(c),
@@ -79,6 +85,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )
               ) ).as("application/json")
       }
+      case _ =>
       
     }
     NotFound
@@ -155,6 +162,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )
               ) ).as("application/json")
       }
+      case _ =>
     }
     NotFound
   }
@@ -178,7 +186,9 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         userDAO.saveUserSetting( setting )
         Ok( "1" ).as("application/json")
       }
+      case _ =>
     }
+    
     NotFound
   }
   
@@ -200,6 +210,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
               )
           Ok( "1" ).as("application/json")
       }
+      case _ =>
     }
     NotFound
   }
@@ -217,6 +228,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  Map( "data"-> "Subscripton Added" )
               ) ).as("application/json")
       }
+      case _ =>
     }
     NotFound
   }
@@ -227,23 +239,26 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     	  val opml = userDAO.getOpmlById( user.email.get ).get
           Ok( opml.toXml ).as("text/html")
       }
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
   //this method deals with file input
   def importOPML = UserAwareAction(parse.multipartFormData) { implicit request =>
     request.user match {
-      case Some(user) => {
+      case Some(user) => {//TODO: validation maybe
          request.body.file("file").map{ opmlfile =>
             val bb = new SerialBlob( FileUtils.readFileToByteArray( opmlfile.ref.file ) )
          	val os = new OpmlStorage( user.email.get, bb )
-            userDAO.saveOpmlStorage(os)
+            userDAO.saveOpmlStorage(os)//TODO: should merge OPML instead of overwriting
             Ok( "1" ).as("application/json")
-         }
+         }.getOrElse(NotFound)
+         
       }
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
   def JsObject2OpmlOutline(  children:List[OpmlOutline],node:JsObject):OpmlOutline = {
@@ -253,10 +268,12 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   //this method deals with json input
   //POST opml=>jsonstring
   def uploadOPML( ) = UserAwareAction { request =>
-      val opml = request.getQueryString("opml").get
-     request.user match {
-      case Some(user) => {
-         val feedlist = Json.parse(opml).as[List[JsObject]]
+     val jsonparams =  request.body.asJson  
+     ( request.user, jsonparams )  match {
+      case ( Some(user), Some(jsparam ) ) => {
+         //val feedlist = Json.parse(opml)
+         //( params \ "opml" ).as[List[JsObject]] 
+        val feedlist = ( jsparam \ "opml" ).as[List[JsObject]] 
          val result = feedlist.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc, node ) =>{
 	    	val outline2 = (node \ "Outline").as[List[JsObject]]
 	    	val result2 = outline2.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc2, node2 ) =>{
@@ -270,8 +287,9 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	     userDAO.saveOpml( opmlresult )
          Ok( "1" ).as("application/json")
       }
+      case (_,_) => NotFound
     }
-    NotFound
+    
   }
   
   /*NOT GOING TO BE IMPLEMENTED */

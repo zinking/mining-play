@@ -16,6 +16,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-testkit" % "2.2.3",
   "junit" % "junit" % "4.10" % "test",
   "commons-io" % "commons-io" % "2.2",
+  "ws.securesocial" %% "securesocial" % "master-SNAPSHOT" withSources(),
+  "ws.securesocial" %% "securesocial-testkit" % "master-SNAPSHOT" % "test" withSources(),
   "org.scalatest" %% "scalatest" % "1.9.1" % "test" 
 )
 

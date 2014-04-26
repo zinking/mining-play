@@ -9,26 +9,14 @@ import securesocial.core.Authorization
 import securesocial.core.{IdentityId, UserService, Identity, Authorization}
 
 
-case class User (
-    id:String,
-    email:String,
-    read:Date,
-    account:Int,
-    created:Date
-)
+case class User ( id:String, email:String )
 
 object User{
-  var users = Set(
-      User("1","1@1.1",new Date, 1, new Date)
-  )
-  def findAll = this.users.toList.sortBy( _.email )
+  def apply( user:Identity ) = {
+    new User( user.email.get, user.email.get  )
+  }
 }
 
-
-
-
-
-// An Authorization implementation that only authorizes uses that logged in using twitter
 case class WithProvider(provider: String) extends Authorization {
   def isAuthorized(user: Identity) = {
     user.identityId.providerId == provider

@@ -11,19 +11,18 @@ import models.WithProvider
 object Application extends Controller with securesocial.core.SecureSocial {
 	
   def index = SecuredAction(WithProvider("google")) { implicit request =>
+    val identity = request.user
     val msgs = Seq( )
-    val role = 1
-    val stripekey = "l32jk"
-    var reader:User = new User("1","1@1.1",new Date, 1, new Date)
       
     request.user match {
-      case user: Identity => {
-        reader = new User("1", user.email.getOrElse(""), new Date, 1, new Date)
+      case id: Identity => {
+        val reader = User( id )
+        Ok( views.html.index( reader ,msgs ) )
       }
-      case _ => ??? //TODO: log error/thow exception
+      case _ => 
+        Ok( "hello welcome" ) //default page not logged in
     }
     
-    Ok( views.html.index( reader ,stripekey,msgs,role) )
   }
   
   
@@ -32,5 +31,7 @@ object Application extends Controller with securesocial.core.SecureSocial {
   }
 
 }
+
+
 
 
