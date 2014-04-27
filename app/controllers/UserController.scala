@@ -37,6 +37,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
                 Nil
                 )
             )
+            
             Ok( Json.toJson(
         		  Map( "data"  -> storyContents  ) 
         		  )).as("application/json")
@@ -162,9 +163,9 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )
               ) ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
   def markRead = Action{ request =>
@@ -172,7 +173,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   }
   
   def markUnread = Action{ request =>
-    NotImplemented
+    NotImplemented //TODO: suggested merge with markRead
   }  
   
   def saveOptions(  ) = UserAwareAction { request =>
@@ -215,22 +216,24 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     NotFound
   }
   
-  def addSubscription( ) = UserAwareAction { request =>
+  def addSubscription = UserAwareAction { request =>
     //1. update the feed in the system
     //2. record the feed in user's inventory
-    val url = request.getQueryString("url").get
+    
     request.user match {
-      case Some(user) => {
+      case Some(user) => {//TODO: drastically simplified scenario
+          //val url = request.getQueryString("url").get
+          val url = request.body.asFormUrlEncoded.get("url")(0)
     	  val feedp = feedDAO.createOrUpdateFeed(url)
     	  val uid = user.email.get
-    	  userDAO.addOmplOutline( uid, feedp.feed.outline )
+    	  userDAO.addOmplOutline( uid, feedp.outline )
           Ok( Json.toJson(
         		  Map( "data"-> "Subscripton Added" )
               ) ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
   def exportOPML = UserAwareAction { request =>
@@ -245,7 +248,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   }
   
   //this method deals with file input
-  def importOPML = UserAwareAction(parse.multipartFormData) { implicit request =>
+  def importOPML = UserAwareAction(parse.multipartFormData) { request =>
     request.user match {
       case Some(user) => {//TODO: validation maybe
          request.body.file("file").map{ opmlfile =>
@@ -267,13 +270,10 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	}
   //this method deals with json input
   //POST opml=>jsonstring
-  def uploadOPML( ) = UserAwareAction { request =>
-     val jsonparams =  request.body.asJson  
-     ( request.user, jsonparams )  match {
-      case ( Some(user), Some(jsparam ) ) => {
-         //val feedlist = Json.parse(opml)
-         //( params \ "opml" ).as[List[JsObject]] 
-        val feedlist = ( jsparam \ "opml" ).as[List[JsObject]] 
+  def uploadOPML(  ) = UserAwareAction{ request =>
+     request.user   match {
+      case  Some(user) => {
+         val feedlist = ( request.body.asJson.get \ "opml" ).as[List[JsObject]] 
          val result = feedlist.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc, node ) =>{
 	    	val outline2 = (node \ "Outline").as[List[JsObject]]
 	    	val result2 = outline2.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc2, node2 ) =>{
@@ -287,7 +287,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	     userDAO.saveOpml( opmlresult )
          Ok( "1" ).as("application/json")
       }
-      case (_,_) => NotFound
+      case _ => NotFound
     }
     
   }

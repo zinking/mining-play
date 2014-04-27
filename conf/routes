@@ -1,6 +1,5 @@
 #Home Page
 GET     /                   			controllers.Application.index
-
 GET 	/static/*file   				controllers.Assets.at(path="/public", file) 
 GET		/push							controllers.Application.default
 GET		/tasks/import-opml 				controllers.Application.default
@@ -11,8 +10,9 @@ GET		/tasks/update-feed 				controllers.Application.default
 GET		/tasks/update-feeds 			controllers.Application.default
 GET		/tasks/delete-old-feeds 		controllers.Application.default
 GET		/tasks/delete-old-feed 			controllers.Application.default
-GET		/user/add-subscription 			controllers.UserController.addSubscription
-GET		/user/delete-account 			controllers.UserController.deleteAccount
+
+POST	/user/add-subscription 			controllers.UserController.addSubscription
+
 GET		/user/export-opml 				controllers.UserController.exportOPML
 POST	/user/import-opml 				controllers.UserController.importOPML
 POST	/user/upload-opml 				controllers.UserController.uploadOPML
@@ -22,7 +22,7 @@ GET		/user/get-fee 					controllers.UserController.getFee
 GET		/user/get-feed 					controllers.UserController.getFeed
 GET		/user/get-stars 				controllers.UserController.getStars
 
-POST	/user/list-feeds 				controllers.UserController.listFeeds
+GET 	/user/list-feeds 				controllers.UserController.listFeeds
 GET		/user/mark-read 				controllers.UserController.markRead
 GET		/user/mark-unread 				controllers.UserController.markUnread
 POST	/user/save-options 				controllers.UserController.saveOptions
@@ -32,6 +32,7 @@ GET		/user/charge 					controllers.UserController.charge
 GET		/user/account 					controllers.UserController.account
 GET		/user/uncheckout 				controllers.UserController.unCheckout
 
+POST	/user/delete-account 			controllers.UserController.deleteAccount
 GET		/admin/all-feeds 				controllers.Application.default
 GET		/admin/all-feeds-opml 			controllers.Application.default
 GET		/admin/user 					controllers.Application.default
