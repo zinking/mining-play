@@ -57,6 +57,16 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		});
 	};
 
+  	$scope.httpj = function(method, url, data) {
+		return $http({
+			method: method,
+			url: url,
+			data:JSON.stringify(data), 
+			headers: {'Content-Type': 'application/json'}
+		});
+	};
+
+
 	$scope.addSubscription = function(e) {
 		if (!$scope.addFeedUrl) {//checking this value to prevent repeated add
 			return false;
@@ -65,7 +75,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		btn.button('loading')
 		$scope.loading++;
 		var f = $('#add-subscription-form');
-		$scope.http('POST', f.attr('data-url'), {
+		$scope.httpj('POST', f.attr('data-url'), {
 			url: $scope.addFeedUrl
 		}).then(function() {
 			$scope.addFeedUrl = '';
@@ -143,7 +153,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$scope.shown = 'feeds'; //shown is binded with display to control what will show
 		$scope.resetScroll();
 		delete $scope.currentStory;
-		$http.post($('#refresh').attr('data-url-feeds'))
+		$http.get($('#refresh').attr('data-url-feeds'))
 			.success(function(data) {
 				$scope.clear(); //basically resets everything
 				if (data.ErrorSubscription) {

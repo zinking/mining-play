@@ -54,15 +54,17 @@ object UserController extends Controller with securesocial.core.SecureSocial {
       case Some(user) => {
         val uid = user.email.get
         val param = request.body.asJson.get
-        val c = (param\"c").as[Int]
+        val c = ((param\"c").as[String]).toInt
         val f = (param\"f").as[String]
         val stars = userDAO.getUserStarStories(uid, pageno=c)
-        val starStories = stars.map( feedDAO.getStoryById(_))
+        val starStories = stars.map( s =>
+            feedDAO.getStoryByLink(s.link)
+        )
          Ok( Json.toJson(
         		  Map( 
         		      "Cursor"  -> param\"c",
         		      "Stories" -> Json.toJson( starStories.map( Story2JsObject(_))),
-        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		      "stars"   -> Json.toJson( stars.map( s=> JsString( s.link )))
         		  )
               ) ).as("application/json")
       }
@@ -77,22 +79,22 @@ object UserController extends Controller with securesocial.core.SecureSocial {
       case Some(user) => {
         val uid = user.email.get
         val param = request.body.asJson.get
-        val c = (param\"c").as[Int]
+        val c = ((param\"c").as[String]).toInt
         val f = (param\"f").as[String]
-        val stories = feedDAO.getFeedStories(f, pageno=c) //Question here is how is user's read/unread info dealt with
+        val stories = feedDAO.getFeedStories(f, pageNo=c) //Question here is how is user's read/unread info dealt with
         val stars = userDAO.getUserStarStories(uid, pageno=c)
          Ok( Json.toJson(
         		  Map( 
         		      "Cursor"  -> param\"c",
         		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
-        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		      "stars"   -> Json.toJson( stars.map( s=> JsString(s.link)))
         		  )
               ) ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
       
     }
-    NotFound
+    
   }
 
     def OpmlOutline2JsObject(  children:List[JsObject],node:OpmlOutline):JsObject = {
@@ -142,7 +144,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     request.user match {
       case Some(user) => {
         val uid = user.email.get
-        val opml = userDAO.getOpmlById( uid ).get
+        val opml = userDAO.getOpmlById( uid ).getOrElse( new Opml( uid, Nil) )
     	  val opmllist = opml.outline.foldLeft[List[JsObject]]( List[JsObject]() )(( acc, node ) =>{
 	    	val subOutlines = node.outline
 	    	val subopmllist = subOutlines.foldLeft[List[JsObject]]( List[JsObject]() )(( acc2, node2 ) =>{
@@ -154,7 +156,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	     })
 	     
 	     val stories = feedDAO.getOpmlStories(opml)
-	     val feeds = opml.allFeeds
+	     val feeds = opml.getAllOutlines
 	     val stars = userDAO.getUserStarStories(uid)
 	     
          Ok( Json.toJson(
@@ -162,7 +164,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		      "Opml"    -> Json.toJson( opmllist ),
         		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
         		      "feeds"   -> Json.toJson( feeds.map( Feed2JsObject(_)) ),
-        		      "stars"   -> Json.toJson( stars.map( JsString(_)))
+        		      "stars"   -> Json.toJson( stars.map( s=> JsString( s.link )))
         		  )
               ) ).as("application/json")
       }
@@ -181,7 +183,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
           slist.foreach( item =>{
             val feed  = (item\"Feed").as[String]
             val story = (item\"Story").as[String]
-            userDAO.saveUserReadStory(uid, story, "READ")
+            userDAO.saveUserReadStoryWithLink(uid, story, "READ")
           })
           
           Ok( "1" ).as("application/json")
@@ -199,7 +201,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
           slist.foreach( item =>{
             val feed  = (item\"Feed").as[String]
             val story = (item\"Story").as[String]
-            userDAO.saveUserReadStory(uid, story, "UNREAD")
+            userDAO.saveUserReadStoryWithLink(uid, story, "UNREAD")
           })
           
           Ok( "1" ).as("application/json")
@@ -214,11 +216,12 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	request.user match {
       case Some(user) => {
         //val joptions = Json.parse(options).as[JsObject]
+        val uid = user.email.get
         val param = request.body.asJson.get
         val joptions = param \ "options"
-        val setting = Setting( user.email.get, (joptions\"sort").as[String] , 
+        val setting = mining.io.User( uid,uid, (joptions\"sort").as[String] , 
         				(joptions\"mode").as[String] ,(joptions\"hideEmpty").as[String] )
-        userDAO.saveUserSetting( setting )
+        userDAO.saveUser( setting )
         Ok( "1" ).as("application/json")
       }
       case _ => NotFound
@@ -236,11 +239,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
           val feed  = (param\"feed").as[String]
           val story = (param\"story").as[String]
           val del   = (param\"del").as[String]
-          userDAO.setUserStarStory( uid, story,  
-        		  del match{
-			        case "1" => "STAR"
-			      }
-              )
+          userDAO.setUserStarStoryWithLink( uid, story,  del == "1" )
           Ok( "1" ).as("application/json")
       }
       case _ => NotFound
