@@ -47,6 +47,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	};
 
 	//data is optional
+    //data is all composed in x-www-form-urlencoded form; to add application/json TBD
 	$scope.http = function(method, url, data) {
 		return $http({
 			method: method,

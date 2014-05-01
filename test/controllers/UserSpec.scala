@@ -23,6 +23,7 @@ import play.api.test.FakeHeaders
 import securesocial.core.SocialUser
 import play.api.libs.json.Json
 import play.api.libs.json.JsArray
+import play.api.libs.json.JsValue
 
 @RunWith(classOf[JUnitRunner])
 class UserControllerSpec extends PlaySpecification with ShouldMatchers {
@@ -55,6 +56,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
   
 
   sequential
+  
   "zhangsan should be able to import opml" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
     val tempfile = File.createTempFile("sample", ".opml"); 
     tempfile.deleteOnExit();
@@ -98,9 +100,9 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsJson(jsonresult)
-    ( result \ "Opml" ).as[JsArray].value.size must be greaterThan( 2 )
-    ( result \ "Stories" ).as[JsArray].value.size must be greaterThan( 2 )
-    ( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 2 )
+    ( result \ "Opml" ).as[JsArray].value.size must be greaterThan( 0 )
+    ( result \ "Stories" ).as[JsArray].value.size must be greaterThan( 0 )
+    ( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
   }
   
   "zhangsan should be able to upload opml" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
@@ -118,23 +120,80 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
   }
   
   "zhangsan should be able to save his preferences" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-       
+    val jsonparams = Json.obj( 
+    		"options" -> Json.obj( "sort" -> "newest", "mode"->"all", "hideEmpty"->"false")
+        )
+    val request = FakeRequest( GET, "/user/save-options").withCookies( cookie ).withJsonBody(jsonparams )
+    				
+    val jsonresult = UserController.listFeeds()(request)
+    status(jsonresult) must be equalTo OK
+    contentType(jsonresult).get must equalTo("application/json")
+    val result = contentAsString(jsonresult)
+    result must contain ("1")
   }
   
   "zhangsan should be able to star one of the story he read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
      //star and share action ... can they be treated as the same  
+    val jsonparams = Json.obj( 
+    		"feed"->"http://blog.csdn.net/zhuliting/rss/list",
+    		"story"->"http://blog.csdn.net/zhuliting/blog/1",
+    		"del"->""
+        )
+    val request = FakeRequest( GET, "/user/set-star").withCookies( cookie ).withJsonBody(jsonparams )
+    				
+    val jsonresult = UserController.listFeeds()(request)
+    status(jsonresult) must be equalTo OK
+    contentType(jsonresult).get must equalTo("application/json")
+    val result = contentAsString(jsonresult)
+    result must contain ("1")
   }
   
   "zhangsan should be able to mark one story he read as read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //there should be different markread [ nature read; markread; markunread ]     
+     //there should be different markread [ nature read; markread; markunread ] 
+    val item = Json.obj( 
+    		"Feed"->"http://blog.csdn.net/zhuliting/rss/list",
+    		"Story"->"http://blog.csdn.net/zhuliting/blog/1"
+        )
+    val jsonparams = JsArray( List(item, item ))
+    val request = FakeRequest( GET, "/user/mark-read").withCookies( cookie ).withJsonBody(jsonparams )
+    				
+    val jsonresult = UserController.listFeeds()(request)
+    status(jsonresult) must be equalTo OK
+    contentType(jsonresult).get must equalTo("application/json")
+    val result = contentAsString(jsonresult)
+    result must contain ("1")
   }
   
   "zhangsan should be able to mark stories of one feed he read as all read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //    
+     //there's no such API ... TODO:   
+     //but should be considered because passing all stories in feed contains more traffic
   }
   
   "zhangsan should be able to get a list of stories of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //pagnation should be considered    
+     //pagnation should be considered
+    val jsonparams = Json.obj( 
+    		"f"->"http://coolshell.cn/feed",
+    		"c"->"0"
+        )
+    val request = FakeRequest( GET, "/user/get-feed").withCookies( cookie ).withJsonBody(jsonparams )
+    				
+    val jsonresult = UserController.listFeeds()(request)
+    status(jsonresult) must be equalTo OK
+    contentType(jsonresult).get must equalTo("application/json")
+    val result = contentAsJson(jsonresult)
+    ( result \ "Cursor" ).as[String]  must contain ("0")
+    ( result \ "Stories" ).as[JsArray].value.size must be greaterThan( 0 )
+    //( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
+    val page0head = ( result \ "Stories" ).as[List[JsValue]].head
+    
+    val jparam2 = Json.obj( 
+    		"f"->"http://coolshell.cn/feed",
+    		"c"->"1"
+        )
+    val rq2 = FakeRequest( GET, "/user/get-feed").withCookies( cookie ).withJsonBody(jparam2 )		
+    val jr2 = UserController.listFeeds()(rq2)
+    val page1head = ( result \ "Stories" ).as[List[JsValue]].head
+    ( page0head \ "Link" ).as[String] must not equalTo ( page1head \ "Link" ).as[String]
   }
   
   "zhangsan should be able to get a list of stared stories of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {

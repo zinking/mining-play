@@ -43,44 +43,47 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         		  )).as("application/json")
       }
       
-      case _ =>
+      case _ => NotFound
     }
-    NotFound
+    
   }
 
    def getStars(  ) = UserAwareAction { request => 
    //get star stories of a user, with cursor/offset
-    val c = request.getQueryString("c").get
     request.user match {
       case Some(user) => {
         val uid = user.email.get
-        val stars = userDAO.getUserStarStories(uid)
+        val param = request.body.asJson.get
+        val c = (param\"c").as[Int]
+        val f = (param\"f").as[String]
+        val stars = userDAO.getUserStarStories(uid, pageno=c)
         val starStories = stars.map( feedDAO.getStoryById(_))
          Ok( Json.toJson(
         		  Map( 
-        		      "Cursor"  -> JsString(c),
+        		      "Cursor"  -> param\"c",
         		      "Stories" -> Json.toJson( starStories.map( Story2JsObject(_))),
         		      "stars"   -> Json.toJson( stars.map( JsString(_)))
         		  )
               ) ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
  def getFeed(  ) = UserAwareAction { request => 
    //get stories of a feed, with cursor/offset
     request.user match {
       case Some(user) => {
-        val c = request.getQueryString("c").get
-        val f = request.getQueryString("f").get
         val uid = user.email.get
-        val stories = feedDAO.getFeedStories(f) //Question here is how is user's read/unread info dealt with
-        val stars = userDAO.getUserStarStories(uid)
+        val param = request.body.asJson.get
+        val c = (param\"c").as[Int]
+        val f = (param\"f").as[String]
+        val stories = feedDAO.getFeedStories(f, pageno=c) //Question here is how is user's read/unread info dealt with
+        val stars = userDAO.getUserStarStories(uid, pageno=c)
          Ok( Json.toJson(
         		  Map( 
-        		      "Cursor"  -> JsString(c),
+        		      "Cursor"  -> param\"c",
         		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
         		      "stars"   -> Json.toJson( stars.map( JsString(_)))
         		  )
@@ -168,52 +171,81 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     
   }
   
-  def markRead = Action{ request =>
-    NotImplemented
+  def markRead = UserAwareAction { request =>
+    //INPUT [{Feed(xmlurl) Story(storyId)}]
+    request.user match {
+      case Some(user) => {
+          val uid = user.email.get
+          val param = request.body.asJson.get
+          val slist = param.as[List[JsObject]] 
+          slist.foreach( item =>{
+            val feed  = (item\"Feed").as[String]
+            val story = (item\"Story").as[String]
+            userDAO.saveUserReadStory(uid, story, "READ")
+          })
+          
+          Ok( "1" ).as("application/json")
+      }
+      case _ => NotFound
+    }
   }
   
-  def markUnread = Action{ request =>
-    NotImplemented //TODO: suggested merge with markRead
+  def markUnread = UserAwareAction { request =>
+    request.user match {
+      case Some(user) => {
+          val uid = user.email.get
+          val param = request.body.asJson.get
+          val slist = param.as[List[JsObject]] 
+          slist.foreach( item =>{
+            val feed  = (item\"Feed").as[String]
+            val story = (item\"Story").as[String]
+            userDAO.saveUserReadStory(uid, story, "UNREAD")
+          })
+          
+          Ok( "1" ).as("application/json")
+      }
+      case _ => NotFound
+    }
   }  
   
   def saveOptions(  ) = UserAwareAction { request =>
     //INPUT options:{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}
-    val options = request.getQueryString("options").get
+    //val options = request.getQueryString("options").get
 	request.user match {
       case Some(user) => {
-        val joptions = Json.parse(options).as[JsObject]
+        //val joptions = Json.parse(options).as[JsObject]
+        val param = request.body.asJson.get
+        val joptions = param \ "options"
         val setting = Setting( user.email.get, (joptions\"sort").as[String] , 
         				(joptions\"mode").as[String] ,(joptions\"hideEmpty").as[String] )
         userDAO.saveUserSetting( setting )
         Ok( "1" ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
     }
-    
-    NotFound
   }
   
   def setStar(  ) = UserAwareAction { request => 
     //INPUT {feed:xmlUrl, story:storyId, del: '' : '1' //TODO: I don't like these magic numbers, they should be adapted to meaningful things
-    val data = request.getQueryString("data").get
+    //the namings of request parameter is not consistent TODO:
+    //val data = request.getQueryString("data").get
     request.user match {
       case Some(user) => {
           val uid = user.email.get
-          val dict = Json.parse(data).as[JsObject]
-          val feed = (dict\"feed").as[String]
-          val story = (dict\"story").as[String]
-          val del  = (dict\"del").as[String]
+          val param = request.body.asJson.get
+          val feed  = (param\"feed").as[String]
+          val story = (param\"story").as[String]
+          val del   = (param\"del").as[String]
           userDAO.setUserStarStory( uid, story,  
         		  del match{
-			        case "" => ""
 			        case "1" => "STAR"
 			      }
               )
           Ok( "1" ).as("application/json")
       }
-      case _ =>
+      case _ => NotFound
     }
-    NotFound
+    
   }
   
   def addSubscription = UserAwareAction { request =>
@@ -265,15 +297,16 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   }
   
   def JsObject2OpmlOutline(  children:List[OpmlOutline],node:JsObject):OpmlOutline = {
-	  new OpmlOutline(children,  (node\"title").as[String], (node\"xmlUrl").as[String], 
-	    (node\"type").as[String], (node\"text").as[String], (node\"htmlUrl").as[String])
+	  new OpmlOutline(children,  (node\"Title").as[String], (node\"XmlUrl").as[String], 
+	    (node\"Type").as[String], (node\"Text").as[String], (node\"HtmlUrl").as[String])
 	}
   //this method deals with json input
   //POST opml=>jsonstring
   def uploadOPML(  ) = UserAwareAction{ request =>
      request.user   match {
       case  Some(user) => {
-         val feedlist = ( request.body.asJson.get \ "opml" ).as[List[JsObject]] 
+         val jsonparams = request.body.asJson.get
+         val feedlist = (  jsonparams \ "opml" ).as[List[JsObject]] 
          val result = feedlist.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc, node ) =>{
 	    	val outline2 = (node \ "Outline").as[List[JsObject]]
 	    	val result2 = outline2.foldLeft[List[OpmlOutline]]( List[OpmlOutline]() )(( acc2, node2 ) =>{
