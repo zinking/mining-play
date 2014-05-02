@@ -5,7 +5,6 @@ import play.api.mvc._
 import java.text.SimpleDateFormat
 import java.util.Date
 import securesocial.core.{IdentityId, UserService, Identity, Authorization}
-import models.User
 import models.WithProvider
 
 object Application extends Controller with securesocial.core.SecureSocial {
@@ -16,7 +15,7 @@ object Application extends Controller with securesocial.core.SecureSocial {
       
     request.user match {
       case id: Identity => {
-        val reader = User( id )
+        val reader = mining.io.UserFactory.newUser( id.email.get, id.email.get ) 
         Ok( views.html.index( reader ,msgs ) )
       }
       case _ => 

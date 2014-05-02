@@ -20,6 +20,8 @@ import play.api.{Logger, Application}
 import securesocial.core._
 import securesocial.core.providers.Token
 import securesocial.core.IdentityId
+import mining.io.slick.SlickUserDAO
+import scala.slick.driver.H2Driver
 
 
 /**
@@ -37,6 +39,9 @@ class InMemoryUserService(application: Application) extends UserServicePlugin(ap
   var users = Map[String, User]()
   //private var identities = Map[String, Identity]()
   private var tokens = Map[String, Token]()
+  
+  val userDAO = SlickUserDAO(H2Driver)
+  userDAO.manageDDL
 
   def find(id: IdentityId): Option[Identity] = {
     if ( logger.isDebugEnabled ) {
@@ -79,6 +84,8 @@ class InMemoryUserService(application: Application) extends UserServicePlugin(ap
       case _ =>
         val newId = System.currentTimeMillis().toString
         users = users + (newId -> User(newId, List(user)))
+        val newmininguser = mining.io.UserFactory.newUser(user.email.get, user.email.get) 
+        userDAO.saveUser(newmininguser)
     }
     // this sample returns the same user object, but you could return an instance of your own class
     // here as long as it implements the Identity trait. This will allow you to use your own class in the protected

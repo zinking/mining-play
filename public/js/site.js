@@ -75,7 +75,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		btn.button('loading')
 		$scope.loading++;
 		var f = $('#add-subscription-form');
-		$scope.httpj('POST', f.attr('data-url'), {
+		$scope.http('POST', f.attr('data-url'), {
 			url: $scope.addFeedUrl
 		}).then(function() {
 			$scope.addFeedUrl = '';
@@ -412,7 +412,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	$scope.markUnread = function(s) { //mark unread and mark read ????
 		var uc = !s.Unread; //uc means s.read?
 		var attr = uc ? '' : 'un';
-		$scope.http('POST', $('#mark-all-read').attr('data-url-' + attr + 'read'), {
+		$scope.httpj('POST', $('#mark-all-read').attr('data-url-' + attr + 'read'), {
 			feed: s.feed.XmlUrl,
 			story: s.Id
 		});
@@ -481,10 +481,11 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 
 	var prevOpts;
 	$scope.saveOpts = _.debounce(function() {
-		var opts = JSON.stringify($scope.opts);
+		//var opts = JSON.stringify($scope.opts);
+        var opts = $scope.opts
 		if (opts == prevOpts) return;
 		prevOpts = opts;
-		$scope.http('POST', $('#story-list').attr('data-url-options'), {
+		$scope.httpj('POST', $('#story-list').attr('data-url-options'), {
 			options: opts
 		});
 		$scope.$apply();
@@ -785,7 +786,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		var opml = JSON.stringify($scope.feeds);
 		if (opml == prevOpml) return;
 		prevOpml = opml;
-		$scope.http('POST', $('#story-list').attr('data-url-upload'), {
+		$scope.httpj('POST', $('#story-list').attr('data-url-upload'), {
 			opml: opml
 		});
 		$scope.$apply();
@@ -797,14 +798,17 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 	$scope.cursors = {};
 	$scope.fetching = {};
 	$scope.getFeed = function() {
+        var url = ""
+        var datain = {}
 		if ($scope.activeFeed) {
 			var f = $scope.activeFeed;
 			if ($scope.fetching[f]) return;
 			$scope.fetching[f] = true;
-			var url = sl.attr('data-url-get-feed') + '?' + $.param({
-				f: f,
-				c: $scope.cursors[f] || ''
-			});
+			url = sl.attr('data-url-get-feed')
+            datain = {
+                f: f,
+				c: $scope.cursors[f] || '0'
+			} 
 			var success = function (data) {
 				if (!data.Stories) return;
 				delete $scope.fetching[f];
@@ -823,9 +827,8 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		} else if ($scope.activeStar) {
 			if ($scope.fetching['stars']) return;
 			$scope.fetching['stars'] = true;
-			var url = sl.attr('data-url-get-stars') + '?' + $.param({
-				c: $scope.cursors['stars'] || ''
-			});
+			url = sl.attr('data-url-get-stars')
+            datain = {c: $scope.cursors['stars'] || '0'};
 			var success = function(data) {
 				if (!data.Stories) return;
 				delete $scope.fetching['stars'];
@@ -855,7 +858,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 				return;
 			}
 		}
-		$scope.http('GET', url).success(function(data) {
+		$scope.httpj('POST', url, datain).success(function(data) {
 			success(data);
 			$scope.updateStories();
 			$scope.checkLoadNextPage();
@@ -1006,7 +1009,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			var token = function(res){
 				var button = $('#button' + plan);
 				button.button('loading');
-				$scope.http('POST', $('#account').attr('data-url-charge'), {
+				$scope.httpj('POST', $('#account').attr('data-url-charge'), {
 					token: res.id,
 					plan: plan
 				})
@@ -1076,7 +1079,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 			$scope.stars[story.guid] = Date.now();
 			$scope.starStories[story.guid] = story;
 		}
-		$scope.http('POST',  $('#mark-all-read').attr('data-url-star'), {
+		$scope.httpj('POST',  $('#mark-all-read').attr('data-url-star'), {
 			feed: story.feed.XmlUrl,
 			story: story.Id,
 			del: $scope.stars[story.guid] ? '' : '1'

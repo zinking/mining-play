@@ -140,13 +140,13 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
     contentType(jsonresult).get must equalTo("application/json")
   }
   
+ 
   "zhangsan should be able to save his preferences" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val jsonparams = Json.obj( 
-    		"options" -> Json.obj( "sort" -> "newest", "mode"->"all", "hideEmpty"->"false")
-        )
-    val request = FakeRequest( GET, "/user/save-options").withCookies( cookie ).withJsonBody(jsonparams )
+   
+    val jsonparams = Json.parse("""{"options":{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}}""")
+    val request = FakeRequest( POST, "/user/save-options").withCookies( cookie ).withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.listFeeds()(request)
+    val jsonresult = UserController.saveOptions()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)
@@ -162,7 +162,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
         )
     val request = FakeRequest( GET, "/user/set-star").withCookies( cookie ).withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.listFeeds()(request)
+    val jsonresult = UserController.setStar()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)
@@ -178,7 +178,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
     val jsonparams = JsArray( List(item, item ))
     val request = FakeRequest( GET, "/user/mark-read").withCookies( cookie ).withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.listFeeds()(request)
+    val jsonresult = UserController.markRead()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)

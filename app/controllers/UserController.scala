@@ -219,8 +219,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         val uid = user.email.get
         val param = request.body.asJson.get
         val joptions = param \ "options"
-        val setting = mining.io.User( uid,uid, (joptions\"sort").as[String] , 
-        				(joptions\"mode").as[String] ,(joptions\"hideEmpty").as[String] )
+        val setting = mining.io.User( uid,uid, (joptions\"sort").as[String] , (joptions\"mode").as[String] ,((joptions\"hideEmpty").as[Boolean]).toString )
         userDAO.saveUser( setting )
         Ok( "1" ).as("application/json")
       }
