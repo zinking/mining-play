@@ -26,21 +26,20 @@ object UserController extends Controller with securesocial.core.SecureSocial {
   def getContents(  ) = UserAwareAction { request => 
     //INPUT: LIST{Feed:xmlurl,Story:Id}
     //OUTPUT: LIST{content string}
-    val data = request.getQueryString("data").get
+    //val data = request.getQueryString("data").get
     request.user match {
       case Some(user) => {
-        val jcontents = Json.parse(data).as[Seq[JsObject]]
-        val storyContents = jcontents.map( ri =>
-            JsObject(
-                "Id"->(ri\"Id").as[JsString]::
-                "Content"->JsString( feedDAO.getStoryContentById( (ri\"Feed").as[String] ) )::
-                Nil
-                )
-            )
-            
-            Ok( Json.toJson(
-        		  Map( "data"  -> storyContents  ) 
-        		  )).as("application/json")
+        val param = request.body.asJson.get
+        val jcontents = param.as[Seq[JsObject]]
+        //val storyContents = jcontents.map( ri =>
+	    //        JsObject(
+	    //            "Id"->(ri\"Story").as[JsString]::
+	    //            "Content"->JsString( feedDAO.getStoryContentByLink( (ri\"Story").as[String] ) )::
+	    //            Nil
+	    //        )
+        //    )
+        val storyContents = jcontents.map( ri => JsString( feedDAO.getStoryContentByLink( (ri\"Story").as[String] ) ) )
+        Ok( Json.toJson( storyContents )).as("application/json")
       }
       
       case _ => NotFound
@@ -55,7 +54,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         val uid = user.email.get
         val param = request.body.asJson.get
         val c = ((param\"c").as[String]).toInt
-        val f = (param\"f").as[String]
+        //val f = (param\"f").as[String]
         val stars = userDAO.getUserStarStories(uid, pageno=c)
         val starStories = stars.map( s =>
             feedDAO.getStoryByLink(s.link)
@@ -85,7 +84,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
         val stars = userDAO.getUserStarStories(uid, pageno=c)
          Ok( Json.toJson(
         		  Map( 
-        		      "Cursor"  -> param\"c",
+        		      "Cursor"  -> JsString( (c+1).toString  ),
         		      "Stories" -> Json.toJson( stories.map( Story2JsObject(_))),
         		      "stars"   -> Json.toJson( stars.map( s=> JsString(s.link)))
         		  )
@@ -118,7 +117,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     		  "Title"->JsString(node.title)::
     		  "Link"->JsString(node.link)::
     		  "Updated"->JsString(node.updated.toString)::
-    		  "Date"->JsString(node.published.toString)::
+    		  "Date"->JsNumber(node.published.getTime/1000.0f)::
     		  "Author"->JsString(node.author)::
     		  "Summary"->JsString(node.description)::
     		  "Content"->JsString(node.content)::
@@ -254,7 +253,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
       case Some(user) => {//TODO: drastically simplified scenario
           //val url = request.getQueryString("url").get
           val url = request.body.asFormUrlEncoded.get("url")(0)
-    	  val feedp = feedDAO.createOrUpdateFeed(url)
+    	  val feedp = feedDAO.createOrUpdateFeed(url) //TODO: throw catch
     	  val uid = user.email.get
     	  userDAO.addOmplOutline( uid, feedp.outline )
           Ok( Json.toJson(

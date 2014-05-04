@@ -810,7 +810,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 				c: $scope.cursors[f] || '0'
 			} 
 			var success = function (data) {
-				if (!data.Stories) return;
+				if (!data.Stories || data.Stories.length == 0) return;
 				delete $scope.fetching[f];
 				if (data.Stars) {
 					_.each(data.Stars, function(s) {

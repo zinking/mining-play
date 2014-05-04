@@ -27,7 +27,7 @@ import play.api.libs.json.JsValue
 import scala.slick.driver.H2Driver
 
 @RunWith(classOf[JUnitRunner])
-class UserControllerSpec extends PlaySpecification with ShouldMatchers {
+class UserSpec extends PlaySpecification with ShouldMatchers {
   import WithLoggedUser._
   
   def sampleOpml:String = {
@@ -191,8 +191,6 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
   }
   
   "zhangsan should be able to get a list of stories of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //pagnation should be considered
-   
     val jsonparams = Json.obj( 
     		"f"->samplefeed,
     		"c"->"0"
@@ -203,10 +201,11 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsJson(jsonresult)
-    ( result \ "Cursor" ).as[String]  must contain ("0")
+    ( result \ "Cursor" ).as[String]  must contain ("1")
     ( result \ "Stories" ).as[JsArray].value.size must be greaterThan( 0 )
     //( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
-    val page0head = ( result \ "Stories" ).as[List[JsValue]].head
+    val page0 = ( result \ "Stories" ).as[List[JsValue]]
+    val page0head = page0.head
     
     val jparam2 = Json.obj( 
     		"f"->samplefeed,
@@ -214,12 +213,21 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers {
         )
     val rq2 = FakeRequest( POST, "/user/get-feed").withCookies( cookie ).withJsonBody(jparam2 )		
     val jr2 = UserController.getFeed()(rq2)
-    val page1head = ( result \ "Stories" ).as[List[JsValue]].head
+    val r2 = contentAsJson(jr2)
+    val page1 = ( r2 \ "Stories" ).as[List[JsValue]]
+    val page1head = page1.head
     ( page0head \ "Link" ).as[String] must not equalTo ( page1head \ "Link" ).as[String]
   }
   
-  "zhangsan should be able to get a list of stared stories of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //pagnation should be considered    
+  "zhangsan should be able to get a content of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+    val jsonparams = Json.parse("""[{"Feed":"http://coolshell.cn/feed","Story":"http://coolshell.cn/articles/11170.html"}]""") 
+    val request = FakeRequest( GET, "/user/get-contents").withCookies( cookie ).withJsonBody(jsonparams )
+    				
+    val jsonresult = UserController.getContents()(request)
+    status(jsonresult) must be equalTo OK
+    contentType(jsonresult).get must equalTo("application/json")
+    val result = contentAsString(jsonresult)
+    result must contain ("42")
   }
   
   "zhangsan should be able to get a list of story contents of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
