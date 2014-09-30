@@ -126,7 +126,7 @@ object UserController extends Controller with securesocial.core.SecureSocial {
     }
     
     /*
-    {"Title":"Flex Title1", "Url":"http://flex1.com/rss", "Type":"rss", "Text":"FLEX TEXT T1",  "Image":"http://www.favicon.co.uk/ico/3908.png",
+    {"Title":"Flex Title1", "Url":"http://flex1.com/rss", "Type":"rss", "Text":"FLEX TEXT T1",  "Image":"http://www.favicon.co.uk/ico/3908.png", //TODO: favicon
 			"Updated":"2014-03-03", "NextUpdate":"2014-03-03", "Date":"2014-03-03" },
     */
     def Feed2JsObject( node:OpmlOutline):JsObject={
@@ -158,6 +158,9 @@ object UserController extends Controller with securesocial.core.SecureSocial {
 	     val feeds = opml.getAllOutlines
 	     val stars = userDAO.getUserStarStories(uid)
 	     
+         //TODO: unreadDate concept. 
+         //the stories before this date cannot be marked as unread -- meaning they are all read
+         //in the goread implementation , it tracks read/unread concept only within 2 weeks
          Ok( Json.toJson(
         		  Map( 
         		      "Opml"    -> Json.toJson( opmllist ),

@@ -156,13 +156,13 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
 		$http.get($('#refresh').attr('data-url-feeds'))
 			.success(function(data) {
 				$scope.clear(); //basically resets everything
-				if (data.ErrorSubscription) {
-					$timeout(function() {
-						alert('Free trial ended. Please subscribe.');
-					});
-					$scope.shown = 'account';
-					return;
-				}
+				//if (data.ErrorSubscription) {
+				//	$timeout(function() {
+				//		alert('Free trial ended. Please subscribe.');
+				//	});
+				//	$scope.shown = 'account';
+				//	return;
+				//}
 				$scope.unreadDate = data.UnreadDate;
 				$scope.untilDays = data.UntilDate ? moment.unix(data.UntilDate).diff(moment(), 'days') : 0;
 				$scope.feeds = data.Opml || $scope.feeds;
@@ -236,7 +236,7 @@ goReadAppModule.controller('GoreadCtrl', function($scope, $http, $timeout, $wind
         //update the page title to display newest unread count
 	$scope.updateTitle = function() {
 		var ur = $scope.unread['all'] || 0;
-		document.title = 'go read' + (ur != 0 ? ' (' + ur + ')' : '');
+		document.title = 'readmine ' + (ur != 0 ? ' (' + ur + ')' : '');
 	};
 
 	/* options dictionary:
