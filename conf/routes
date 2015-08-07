@@ -1,15 +1,15 @@
 #Home Page
-GET     /                   			controllers.Application.index
+GET     /                   			controllers.ApplicationController.index
 GET 	/static/*file   				controllers.Assets.at(path="/public", file) 
-GET		/push							controllers.Application.default
-GET		/tasks/import-opml 				controllers.Application.default
-GET		/tasks/subscribe-feed 			controllers.Application.default
-GET		/tasks/update-feed-last 		controllers.Application.default
-GET		/tasks/update-feed-manual 		controllers.Application.default
-GET		/tasks/update-feed 				controllers.Application.default
-GET		/tasks/update-feeds 			controllers.Application.default
-GET		/tasks/delete-old-feeds 		controllers.Application.default
-GET		/tasks/delete-old-feed 			controllers.Application.default
+GET		/push							controllers.ApplicationController.default
+GET		/tasks/import-opml 				controllers.ApplicationController.default
+GET		/tasks/subscribe-feed 			controllers.ApplicationController.default
+GET		/tasks/update-feed-last 		controllers.ApplicationController.default
+GET		/tasks/update-feed-manual 		controllers.ApplicationController.default
+GET		/tasks/update-feed 				controllers.ApplicationController.default
+GET		/tasks/update-feeds 			controllers.ApplicationController.default
+GET		/tasks/delete-old-feeds 		controllers.ApplicationController.default
+GET		/tasks/delete-old-feed 			controllers.ApplicationController.default
 
 POST	/user/add-subscription 			controllers.UserController.addSubscription
 
@@ -33,14 +33,14 @@ GET		/user/account 					controllers.UserController.account
 GET		/user/uncheckout 				controllers.UserController.unCheckout
 
 POST	/user/delete-account 			controllers.UserController.deleteAccount
-GET		/admin/all-feeds 				controllers.Application.default
-GET		/admin/all-feeds-opml 			controllers.Application.default
-GET		/admin/user 					controllers.Application.default
-GET		/date-formats 					controllers.Application.default
-GET		/admin/feed 					controllers.Application.default
-GET		/admin/subhub 					controllers.Application.default
-GET		/admin/stats 					controllers.Application.default
-GET		/admin/update-feed 				controllers.Application.default
+GET		/admin/all-feeds 				controllers.ApplicationController.default
+GET		/admin/all-feeds-opml 			controllers.ApplicationController.default
+GET		/admin/user 					controllers.ApplicationController.default
+GET		/date-formats 					controllers.ApplicationController.default
+GET		/admin/feed 					controllers.ApplicationController.default
+GET		/admin/subhub 					controllers.ApplicationController.default
+GET		/admin/stats 					controllers.ApplicationController.default
+GET		/admin/update-feed 				controllers.ApplicationController.default
 
 # Login page
 GET     /login                      securesocial.controllers.LoginPage.login

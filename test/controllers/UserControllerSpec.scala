@@ -8,10 +8,6 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.ShouldMatchers
 import play.api.test.WithApplication
 import org.junit.runner.RunWith
-import securesocial.core.IdentityId
-import securesocial.core.AuthenticationMethod
-import securesocial.testkit.SocialUserGenerator
-import securesocial.testkit.WithLoggedUser
 import scala.xml.Elem
 import java.io.File
 import java.io.BufferedWriter
@@ -20,19 +16,22 @@ import play.api.mvc.MultipartFormData
 import play.api.mvc.MultipartFormData.FilePart
 import play.api.libs.Files.TemporaryFile
 import play.api.test.FakeHeaders
-import securesocial.core.SocialUser
 import play.api.libs.json.Json
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsValue
 import scala.slick.driver.H2Driver
+import mining.io.UserFactory
+import play.api.test.PlaySpecification
+import play.api.test.FakeRequest
+import models.AuthUser
+
 
 @RunWith(classOf[JUnitRunner])
-class UserSpec extends PlaySpecification with ShouldMatchers {
-  import WithLoggedUser._
+class UserControllerSpec extends PlaySpecification with ShouldMatchers{
   
   def sampleOpml:String = {
     val dom:Elem  = 
-	<opml version="1.0">
+  <opml version="1.0">
 		<head><title>Sample</title></head>
 		<body>
 			<outline text="We need more..." title="We need more..." type="rss"
@@ -43,27 +42,24 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
 			</outline>
 		</body>
 	</opml>
-	  
-	dom.toString
+    	  
+    	dom.toString
   }
+
+  val zhangsan = UserFactory.newUser("zhangsan@readmine.co", "zhangsan@readmine.co") 
+  //val samplefeed = "http://blog.csdn.net/zhuliting/rss/list"
+  val sampleFeed = "http://coolshell.cn/feed"
+  var sampleStory = "http://coolshell.cn/articles/11170.html"
   
-  def minimalApp = FakeApplication(
-      withoutPlugins=excludedPlugins,
-      additionalPlugins=includedPlugins++List("securesocial.core.DefaultIdGenerator")
-  )
+  val fakeApplication=FakeApplication()
   
-  val user1auth = SocialUser(IdentityId("zhangsan@gmail.com","google"), "san", "zhang", 
-      "zhang san",Some("zhangsan@gmail.com"),None, AuthenticationMethod.OAuth2,None, None, None)
-  
-  val zhangsan = mining.io.UserFactory.newUser(user1auth.email.get, user1auth.email.get) 
-    
-  
-   //val samplefeed = "http://blog.csdn.net/zhuliting/rss/list"
-   val samplefeed = "http://coolshell.cn/feed"
+  step{
+    AuthUser.testUser = Some(zhangsan);
+  }
      
   sequential
-  "when zhangsan first list feeds he should see empty" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val request = FakeRequest( GET, "/user/list-feeds").withCookies( cookie )
+  "when zhangsan first list feeds he should see empty" in {
+    val request = FakeRequest( GET, "/user/list-feeds")
     val jsonresult = UserController.listFeeds()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
@@ -73,7 +69,7 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     ( result \ "feeds" ).as[JsArray].value.size must be equalTo( 0 )
   }
   
-  "zhangsan should be able to import opml" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to import opml" in {
     val userDAO = mining.io.slick.SlickUserDAO(H2Driver)
     userDAO.saveUser(zhangsan)
     val tempfile = File.createTempFile("sample", ".opml"); 
@@ -87,27 +83,25 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
         List(),
         List()
     )
-    val jsonresult = UserController.importOPML()( FakeRequest(POST, "/user/import-opml",FakeHeaders(),data).withCookies(cookie) )
+    val jsonresult = UserController.importOPML()( FakeRequest(POST, "/user/import-opml",FakeHeaders(),data))
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
   }
   
-
-
-  "zhangsan should be able to export opml" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val request = FakeRequest( GET, "/user/export-opml").withCookies( cookie )
-    val Some( xmlresult ) = route( request )
+  "zhangsan should be able to export opml" in new WithApplication() {
+    val request = FakeRequest( GET, "/user/export-opml")
+    //val Some( xmlresult ) = route( request )
+    val xmlresult = UserController.exportOPML()(request)
     status(xmlresult) must be equalTo OK
     contentType(xmlresult).get must equalTo("text/html")
     contentAsString(xmlresult ) must contain( "http://www.beedigital.net/blog/?feed=rss2" )
   }
   
-  
-  "zhangsan should be able to add subscription" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to add subscription" in {
     val request = FakeRequest( POST, "/user/add-subscription")
-    		.withHeaders( CONTENT_TYPE -> "application/x-www-form-urlencoded" ).withCookies( cookie )
+    		.withHeaders( CONTENT_TYPE -> "application/x-www-form-urlencoded" )
     		//.withFormUrlEncodedBody( "url"->"http://coolshell.cn/feed")
-    		.withFormUrlEncodedBody( "url"->samplefeed)
+    		.withFormUrlEncodedBody( "url"->sampleFeed)
     //val Some( jsonresult ) = route( request )
     val jsonresult = UserController.addSubscription()(request)
     status(jsonresult) must be equalTo OK
@@ -115,8 +109,8 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     contentAsString(jsonresult ) must contain( "Subscripton Added" )
   }
   
-  "zhangsan should be able to list feeds" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val request = FakeRequest( GET, "/user/list-feeds").withCookies( cookie )
+  "zhangsan should be able to list feeds" in {
+    val request = FakeRequest( GET, "/user/list-feeds")
     val jsonresult = UserController.listFeeds()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
@@ -126,14 +120,14 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     ( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
   }
   
-  "zhangsan should be able to upload opml" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val request1 = FakeRequest( GET, "/user/list-feeds").withCookies( cookie )
+  "zhangsan should be able to upload opml" in {
+    val request1 = FakeRequest( GET, "/user/list-feeds")
     val lfresult = UserController.listFeeds()(request1)
     val lfjresult = contentAsJson(lfresult)
     
     val jsonparams = Json.obj( "opml"-> (lfjresult\"Opml").as[JsArray] )
     val request2 = FakeRequest( POST, "/user/upload-opml")
-    	.withJsonBody( jsonparams).withHeaders(CONTENT_TYPE->"application/json").withCookies( cookie )
+    	.withJsonBody( jsonparams).withHeaders(CONTENT_TYPE->"application/json")
     	
     val jsonresult = UserController.uploadOPML()(request2)
     status(jsonresult) must be equalTo OK
@@ -141,10 +135,10 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
   }
   
  
-  "zhangsan should be able to save his preferences" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to save his preferences" in {
    
     val jsonparams = Json.parse("""{"options":{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}}""")
-    val request = FakeRequest( POST, "/user/save-options").withCookies( cookie ).withJsonBody(jsonparams )
+    val request = FakeRequest( POST, "/user/save-options").withJsonBody(jsonparams )
     				
     val jsonresult = UserController.saveOptions()(request)
     status(jsonresult) must be equalTo OK
@@ -153,14 +147,14 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     result must contain ("1")
   }
   
-  "zhangsan should be able to star one of the story he read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to star one of the story he read" in {
      //star and share action ... can they be treated as the same  
     val jsonparams = Json.obj( 
     		"feed"->"http://blog.csdn.net/zhuliting/rss/list",
     		"story"->"http://blog.csdn.net/zhuliting/blog/1",
     		"del"->""
         )
-    val request = FakeRequest( GET, "/user/set-star").withCookies( cookie ).withJsonBody(jsonparams )
+    val request = FakeRequest( GET, "/user/set-star").withJsonBody(jsonparams )
     				
     val jsonresult = UserController.setStar()(request)
     status(jsonresult) must be equalTo OK
@@ -169,14 +163,14 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     result must contain ("1")
   }
   
-  "zhangsan should be able to mark one story he read as read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to mark one story he read as read" in {
      //there should be different markread [ nature read; markread; markunread ] 
     val item = Json.obj( 
     		"Feed"->"http://blog.csdn.net/zhuliting/rss/list",
     		"Story"->"http://blog.csdn.net/zhuliting/blog/1"
         )
     val jsonparams = JsArray( List(item, item ))
-    val request = FakeRequest( GET, "/user/mark-read").withCookies( cookie ).withJsonBody(jsonparams )
+    val request = FakeRequest( GET, "/user/mark-read").withJsonBody(jsonparams )
     				
     val jsonresult = UserController.markRead()(request)
     status(jsonresult) must be equalTo OK
@@ -185,17 +179,14 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     result must contain ("1")
   }
 
-  "zhangsan should be able to mark stories of one feed he read as all read" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-     //there's no such API ... TODO:   
-     //but should be considered because passing all stories in feed contains more traffic
-  }
+
   
-  "zhangsan should be able to get a list of stories of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  "zhangsan should be able to get a list of stories of a feed" in {
     val jsonparams = Json.obj( 
-    		"f"->samplefeed,
+    		"f"->sampleFeed,
     		"c"->"0"
         )
-    val request = FakeRequest( POST, "/user/get-feed").withCookies( cookie ).withJsonBody(jsonparams )
+    val request = FakeRequest( POST, "/user/get-feed").withJsonBody(jsonparams )
     				
     val jsonresult = UserController.getFeed()(request)
     status(jsonresult) must be equalTo OK
@@ -207,11 +198,13 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     val page0 = ( result \ "Stories" ).as[List[JsValue]]
     val page0head = page0.head
     
+    sampleStory = (page0head \ "Id").as[String]
+    
     val jparam2 = Json.obj( 
-    		"f"->samplefeed,
+    		"f"->sampleFeed,
     		"c"->"1"
         )
-    val rq2 = FakeRequest( POST, "/user/get-feed").withCookies( cookie ).withJsonBody(jparam2 )		
+    val rq2 = FakeRequest( POST, "/user/get-feed").withJsonBody(jparam2 )		
     val jr2 = UserController.getFeed()(rq2)
     val r2 = contentAsJson(jr2)
     val page1 = ( r2 \ "Stories" ).as[List[JsValue]]
@@ -219,9 +212,9 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     ( page0head \ "Link" ).as[String] must not equalTo ( page1head \ "Link" ).as[String]
   }
   
-  "zhangsan should be able to get a content of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
-    val jsonparams = Json.parse("""[{"Feed":"http://coolshell.cn/feed","Story":"http://coolshell.cn/articles/11170.html"}]""") 
-    val request = FakeRequest( GET, "/user/get-contents").withCookies( cookie ).withJsonBody(jsonparams )
+  "zhangsan should be able to get a content of a feed" in {
+    val jsonparams = Json.parse(s"""[{"Feed":"$sampleFeed","Story":"$sampleStory"}]""") 
+    val request = FakeRequest( GET, "/user/get-contents").withJsonBody(jsonparams )
     				
     val jsonresult = UserController.getContents()(request)
     status(jsonresult) must be equalTo OK
@@ -230,7 +223,12 @@ class UserSpec extends PlaySpecification with ShouldMatchers {
     result must contain ("42")
   }
   
-  "zhangsan should be able to get a list of story contents of a feed" in new WithLoggedUser(minimalApp,Some(user1auth) ) {
+  /*"zhangsan should be able to get a list of story contents of a feed" in {
      //pagnation should be considered    
   }  
+  
+  "zhangsan should be able to mark stories of one feed he read as all read" in {
+     //there's no such API ... TODO:   
+     //but should be considered because passing all stories in feed contains more traffic
+  }*/
 }
