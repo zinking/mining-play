@@ -42,21 +42,20 @@ GET		/admin/subhub 					controllers.ApplicationController.default
 GET		/admin/stats 					controllers.ApplicationController.default
 GET		/admin/update-feed 				controllers.ApplicationController.default
 
-# Login page
-GET     /login                      securesocial.controllers.LoginPage.login
-GET     /logout                     securesocial.controllers.LoginPage.logout
-
-# Providers entry points
-GET     /authenticate/:provider     securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
-POST    /authenticate/:provider     securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
-GET     /not-authorized             securesocial.controllers.ProviderController.notAuthorized
-GET		/user/get-fee 					controllers.UserController.getFee
-
-#removing request params for the moment as it cause incompatible with reverse routing
-#future refactoring work with  http://www.mariussoutier.com/blog/2012/12/10/playframework-routes-part-1-basics/
-
-
-
-
-
-	
+# User Management
+GET     /login                          controllers.AuthUserController.login
+POST    /login                          controllers.AuthUserController.auth
+#GET     /logout                     securesocial.controllers.LoginPage.logout
+#GET     /signup                     securesocial.controllers.Registration.startSignUp
+#POST    /signup                     securesocial.controllers.Registration.handleStartSignUp
+#GET     /signup/:token              securesocial.controllers.Registration.signUp(token)
+#POST    /signup/:token              securesocial.controllers.Registration.handleSignUp(token)
+#GET     /reset                      securesocial.controllers.Registration.startResetPassword
+#POST    /reset                      securesocial.controllers.Registration.handleStartResetPassword
+#GET     /reset/:token               securesocial.controllers.Registration.resetPassword(token)
+#POST    /reset/:token               securesocial.controllers.Registration.handleResetPassword(token)
+#GET     /password                   securesocial.controllers.PasswordChange.page
+#POST    /password                   securesocial.controllers.PasswordChange.handlePasswordChange
+#GET     /authenticate/:provider     securesocial.controllers.ProviderController.authenticate(provider)
+#POST    /authenticate/:provider     securesocial.controllers.ProviderController.authenticateByPost(provider)
+#GET     /not-authorized             securesocial.controllers.ProviderController.notAuthorized

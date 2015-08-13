@@ -5,7 +5,7 @@ import play.api.mvc.Controller
 import play.api.mvc.Action
 import models.AuthUser
 
-object ApplicationController extends Controller {
+class ApplicationController extends Controller {
 
   def index = Action { request =>
     AuthUser.getCurrentUser(request) match {
@@ -14,13 +14,11 @@ object ApplicationController extends Controller {
       }
       case _ => Ok("hello welcome") //default page not logged in
     }
-
   }
   
   def default = Action { request =>
     NotImplemented
   }
-
 }
 
 

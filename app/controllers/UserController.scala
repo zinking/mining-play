@@ -22,11 +22,13 @@ import mining.io.Story
 import play.api.libs.json.JsNumber
 import mining.io.Opml
 import mining.io.User
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import slick.driver.H2Driver.api._
 
-object UserController extends Controller {
-  System.setProperty("runMode", "test")
-  val userDAO = SlickUserDAO(H2Driver)
-  val feedDAO = SlickFeedDAO(H2Driver)
+class UserController extends Controller {
+  val db = Database.forConfig("h2mem1")
+  val userDAO = SlickUserDAO(db)
+  val feedDAO = SlickFeedDAO(db)
 
   userDAO.manageDDL
   feedDAO.manageDDL
@@ -63,7 +65,7 @@ object UserController extends Controller {
     //get star stories of a user, with cursor/offset
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val c = ((param \ "c").as[String]).toInt
         //val f = (param\"f").as[String]
@@ -85,7 +87,7 @@ object UserController extends Controller {
     //get stories of a feed, with cursor/offset
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val c = ((param \ "c").as[String]).toInt
         val f = (param \ "f").as[String]
@@ -148,7 +150,7 @@ object UserController extends Controller {
   def listFeeds = Action { request =>
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val opml = userDAO.getOpmlById(uid).getOrElse(new Opml(uid, Nil))
         val opmllist = opml.outline.foldLeft[List[JsObject]](List[JsObject]())((acc, node) => {
           val subOutlines = node.outline
@@ -184,7 +186,7 @@ object UserController extends Controller {
     //INPUT [{Feed(xmlurl) Story(storyId)}]
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val slist = param.as[List[JsObject]]
         slist.foreach(item => {
@@ -202,7 +204,7 @@ object UserController extends Controller {
   def markUnread = Action { request =>
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val slist = param.as[List[JsObject]]
         slist.foreach(item => {
@@ -223,15 +225,15 @@ object UserController extends Controller {
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
         //val joptions = Json.parse(options).as[JsObject]
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val joptions = param \ "options"
         val setting = User(
-            uid, uid, (joptions \ "sort").as[String], 
+            uid, user.email, (joptions \ "sort").as[String], 
             (joptions \ "mode").as[String], 
             ((joptions \ "hideEmpty").as[Boolean]).toString
         )
-        userDAO.saveUser(setting)
+        userDAO.updateUser(setting)
         Ok("1").as("application/json")
       }
       case _ => NotFound
@@ -245,7 +247,7 @@ object UserController extends Controller {
     //val data = request.getQueryString("data").get
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val uid = user.email
+        val uid = user.userId
         val param = request.body.asJson.get
         val feed = (param \ "feed").as[String]
         val story = (param \ "story").as[String]
@@ -267,7 +269,7 @@ object UserController extends Controller {
         val url = request.body.asFormUrlEncoded.get("url")(0)
         val feedp = feedDAO.createOrUpdateFeed(url) //TODO: throw catch
         val uid = user.email
-        userDAO.addOmplOutline(uid, feedp.outline)
+        userDAO.addOmplOutline(user.userId, feedp.outline)
         val subscriptionContent = Json.obj(
             "data" -> "Subscripton Added"
         );
@@ -281,7 +283,7 @@ object UserController extends Controller {
   def exportOPML = Action { request =>
     AuthUser.getCurrentUser(request) match {
       case Some(user) => {
-        val opml = userDAO.getOpmlById(user.email).get
+        val opml = userDAO.getOpmlById(user.userId).get
         Ok(opml.toXml).as("text/html")
       }
       case _ => NotFound
@@ -292,11 +294,14 @@ object UserController extends Controller {
   //this method deals with file input
   def importOPML = Action(parse.multipartFormData) { request =>
     AuthUser.getCurrentUser(request) match {
-      case Some(user) => { //TODO: validation maybe
+      case Some(user) => { //TODO: validation maybe, required!!!
         request.body.file("file").map { opmlfile =>
-          val bb = new SerialBlob(FileUtils.readFileToByteArray(opmlfile.ref.file))
-          val os = new OpmlStorage(user.email, bb)
-          userDAO.saveOpmlStorage(os) //TODO: should merge OPML instead of overwriting
+          //val bb = new SerialBlob(FileUtils.readFileToByteArray(opmlfile.ref.file))
+          //val os = new OpmlStorage(user.userId, bb)
+          //userDAO.saveOpmlStorage(os) //TODO: should merge OPML instead of overwriting
+          //TODO: probalby don't need to read to memory , just stream to target file
+          val xmlContent = FileUtils.readFileToString(opmlfile.ref.file)
+          userDAO.saveOpml(user.userId,xmlContent)
           Ok("1").as("application/json")
         }.getOrElse(NotFound)
 
@@ -327,7 +332,7 @@ object UserController extends Controller {
           val nid = JsObject2OpmlOutline(result2, node)
           acc :+ nid
         })
-        val opmlresult = Opml(user.email, result)
+        val opmlresult = Opml(user.userId, result)
         userDAO.saveOpml(opmlresult)
         Ok("1").as("application/json")
       }

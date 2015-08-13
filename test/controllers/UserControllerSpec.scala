@@ -24,11 +24,17 @@ import mining.io.UserFactory
 import play.api.test.PlaySpecification
 import play.api.test.FakeRequest
 import models.AuthUser
+import scala.util.Properties
+import play.api.Application
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import slick.driver.H2Driver.api._
+import mining.io.slick.SlickUserDAO
+import mining.util.DirectoryUtil
 
 
 @RunWith(classOf[JUnitRunner])
 class UserControllerSpec extends PlaySpecification with ShouldMatchers{
-  
+  Properties.setProp("runMode", "test")
   def sampleOpml:String = {
     val dom:Elem  = 
   <opml version="1.0">
@@ -45,8 +51,18 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
     	  
     	dom.toString
   }
+  def cleanUpUserOpmlFolder() = {
+    val opmlFolderPath = DirectoryUtil.pathFromProject("target","useropml")
+    val omplFolder = new File(opmlFolderPath)
+    for (subfile <- omplFolder.listFiles()) subfile.delete()
+  }
+  
+  def userController(implicit app: Application) = {
+      val app2ApplicationController = Application.instanceCache[controllers.UserController]
+      app2ApplicationController(app)
+  }
 
-  val zhangsan = UserFactory.newUser("zhangsan@readmine.co", "zhangsan@readmine.co") 
+  val zhangsan = UserFactory.newUser(1L, "zhangsan@readmine.co") 
   //val samplefeed = "http://blog.csdn.net/zhuliting/rss/list"
   val sampleFeed = "http://coolshell.cn/feed"
   var sampleStory = "http://coolshell.cn/articles/11170.html"
@@ -54,13 +70,14 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
   val fakeApplication=FakeApplication()
   
   step{
+    cleanUpUserOpmlFolder
     AuthUser.testUser = Some(zhangsan);
   }
      
   sequential
-  "when zhangsan first list feeds he should see empty" in {
+  "when zhangsan first list feeds he should see empty" in new WithApplication {
     val request = FakeRequest( GET, "/user/list-feeds")
-    val jsonresult = UserController.listFeeds()(request)
+    val jsonresult = userController.listFeeds()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsJson(jsonresult)
@@ -69,8 +86,9 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
     ( result \ "feeds" ).as[JsArray].value.size must be equalTo( 0 )
   }
   
-  "zhangsan should be able to import opml" in {
-    val userDAO = mining.io.slick.SlickUserDAO(H2Driver)
+  "zhangsan should be able to import opml" in new WithApplication {
+    val db = Database.forConfig("h2mem1")
+    val userDAO = SlickUserDAO(db)
     userDAO.saveUser(zhangsan)
     val tempfile = File.createTempFile("sample", ".opml"); 
     tempfile.deleteOnExit();
@@ -83,7 +101,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         List(),
         List()
     )
-    val jsonresult = UserController.importOPML()( FakeRequest(POST, "/user/import-opml",FakeHeaders(),data))
+    val jsonresult = userController.importOPML()( FakeRequest(POST, "/user/import-opml",FakeHeaders(),data))
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
   }
@@ -91,27 +109,27 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
   "zhangsan should be able to export opml" in new WithApplication() {
     val request = FakeRequest( GET, "/user/export-opml")
     //val Some( xmlresult ) = route( request )
-    val xmlresult = UserController.exportOPML()(request)
+    val xmlresult = userController.exportOPML()(request)
     status(xmlresult) must be equalTo OK
     contentType(xmlresult).get must equalTo("text/html")
     contentAsString(xmlresult ) must contain( "http://www.beedigital.net/blog/?feed=rss2" )
   }
   
-  "zhangsan should be able to add subscription" in {
+  "zhangsan should be able to add subscription" in new WithApplication {
     val request = FakeRequest( POST, "/user/add-subscription")
     		.withHeaders( CONTENT_TYPE -> "application/x-www-form-urlencoded" )
     		//.withFormUrlEncodedBody( "url"->"http://coolshell.cn/feed")
     		.withFormUrlEncodedBody( "url"->sampleFeed)
     //val Some( jsonresult ) = route( request )
-    val jsonresult = UserController.addSubscription()(request)
+    val jsonresult = userController.addSubscription()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     contentAsString(jsonresult ) must contain( "Subscripton Added" )
   }
   
-  "zhangsan should be able to list feeds" in {
+  "zhangsan should be able to list feeds" in new WithApplication {
     val request = FakeRequest( GET, "/user/list-feeds")
-    val jsonresult = UserController.listFeeds()(request)
+    val jsonresult = userController.listFeeds()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsJson(jsonresult)
@@ -120,34 +138,34 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
     ( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
   }
   
-  "zhangsan should be able to upload opml" in {
+  "zhangsan should be able to upload opml" in new WithApplication {
     val request1 = FakeRequest( GET, "/user/list-feeds")
-    val lfresult = UserController.listFeeds()(request1)
+    val lfresult = userController.listFeeds()(request1)
     val lfjresult = contentAsJson(lfresult)
     
     val jsonparams = Json.obj( "opml"-> (lfjresult\"Opml").as[JsArray] )
     val request2 = FakeRequest( POST, "/user/upload-opml")
     	.withJsonBody( jsonparams).withHeaders(CONTENT_TYPE->"application/json")
     	
-    val jsonresult = UserController.uploadOPML()(request2)
+    val jsonresult = userController.uploadOPML()(request2)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
   }
   
  
-  "zhangsan should be able to save his preferences" in {
+  "zhangsan should be able to save his preferences" in new WithApplication {
    
     val jsonparams = Json.parse("""{"options":{"folderClose":{},"nav":true,"expanded":false,"mode":"all","sort":"newest","hideEmpty":false,"scrollRead":false}}""")
     val request = FakeRequest( POST, "/user/save-options").withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.saveOptions()(request)
+    val jsonresult = userController.saveOptions()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)
     result must contain ("1")
   }
   
-  "zhangsan should be able to star one of the story he read" in {
+  "zhangsan should be able to star one of the story he read" in new WithApplication {
      //star and share action ... can they be treated as the same  
     val jsonparams = Json.obj( 
     		"feed"->"http://blog.csdn.net/zhuliting/rss/list",
@@ -156,14 +174,14 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         )
     val request = FakeRequest( GET, "/user/set-star").withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.setStar()(request)
+    val jsonresult = userController.setStar()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)
     result must contain ("1")
   }
   
-  "zhangsan should be able to mark one story he read as read" in {
+  "zhangsan should be able to mark one story he read as read" in new WithApplication {
      //there should be different markread [ nature read; markread; markunread ] 
     val item = Json.obj( 
     		"Feed"->"http://blog.csdn.net/zhuliting/rss/list",
@@ -172,7 +190,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
     val jsonparams = JsArray( List(item, item ))
     val request = FakeRequest( GET, "/user/mark-read").withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.markRead()(request)
+    val jsonresult = userController.markRead()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)
@@ -181,14 +199,14 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
 
 
   
-  "zhangsan should be able to get a list of stories of a feed" in {
+  "zhangsan should be able to get a list of stories of a feed" in new WithApplication {
     val jsonparams = Json.obj( 
     		"f"->sampleFeed,
     		"c"->"0"
         )
     val request = FakeRequest( POST, "/user/get-feed").withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.getFeed()(request)
+    val jsonresult = userController.getFeed()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsJson(jsonresult)
@@ -205,18 +223,18 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
     		"c"->"1"
         )
     val rq2 = FakeRequest( POST, "/user/get-feed").withJsonBody(jparam2 )		
-    val jr2 = UserController.getFeed()(rq2)
+    val jr2 = userController.getFeed()(rq2)
     val r2 = contentAsJson(jr2)
     val page1 = ( r2 \ "Stories" ).as[List[JsValue]]
     val page1head = page1.head
     ( page0head \ "Link" ).as[String] must not equalTo ( page1head \ "Link" ).as[String]
   }
   
-  "zhangsan should be able to get a content of a feed" in {
+  "zhangsan should be able to get a content of a feed" in new WithApplication {
     val jsonparams = Json.parse(s"""[{"Feed":"$sampleFeed","Story":"$sampleStory"}]""") 
     val request = FakeRequest( GET, "/user/get-contents").withJsonBody(jsonparams )
     				
-    val jsonresult = UserController.getContents()(request)
+    val jsonresult = userController.getContents()(request)
     status(jsonresult) must be equalTo OK
     contentType(jsonresult).get must equalTo("application/json")
     val result = contentAsString(jsonresult)

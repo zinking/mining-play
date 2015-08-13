@@ -6,17 +6,19 @@ import scala.xml.Elem
 import mining.util.DirectoryUtil
 import scala.collection.mutable.ListBuffer
 import play.api.mvc.Request
-import mining.io.slick.SlickUserDAO
-import scala.slick.driver.H2Driver
 import mining.io.User
 
-
-case class AuthUser ( id:String, email:String, name:String, apiKey:String )
+case class AuthUser ( 
+    var userId:Long, 
+    email:String, 
+    name:String,
+    pass:String,
+    apiKey:String,
+    lastLoginFrom:String,
+    lastLoginTime:Date
+)
 
 object AuthUser{
-  System.setProperty("runMode", "test")
-  val userDAO = SlickUserDAO(H2Driver)
-  
   //since mocking frameworks on SCALA is not support mocking singleton
   //hacks are either required to change the design or ...
   //I'd rather putting the mocking logic here by myself
@@ -28,13 +30,9 @@ object AuthUser{
     }
     else{
       val apiKey = "mining-api-key"
-      request.headers.get(apiKey).flatMap(apiKey =>
-      userDAO.getUserById(apiKey))
+      //request.headers.get(apiKey).flatMap(apiKey =>
+      //userDAO.getUserById(1L))
+      testUser
     }
   }
-  
 }
-
-
-    
-    
