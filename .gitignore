@@ -11,3 +11,4 @@ target
 .java-version
 .sbtserver
 bin/
+.history

@@ -1,55 +1,81 @@
 package controllers
 
-import play.api.mvc.Controller
+import java.util.Date
+
+import mining.model.AuthUser
 import play.api.mvc.Action
 import play.api.data._
 import play.api.data.Forms._
-import models.AuthUser
-import play.api.Play
-import mining.io.slick.SlickUserDAO
-import models.slick.SlickAuthUserDAO
-import slick.driver.H2Driver
-import java.security.MessageDigest
-import javax.inject.{Singleton, Inject}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import slick.driver.H2Driver.api._
+import mining.io.UserFactory
+import play.api.libs.json.JsString
+import play.api.libs.json.Json
 
 /**
  * @author awang
  */
-class AuthUserController () extends Controller {
-  val db = Database.forConfig("h2mem1")
-  val authUserDAO = SlickAuthUserDAO(db)
-  authUserDAO.manageDDL()
-  
-  def md5(s: String) = {
-    MessageDigest.getInstance("MD5").digest(s.getBytes)
-  }
-  
+class AuthUserController () extends MiningController {
   val loginForm = Form(
       tuple(
         "email"    -> nonEmptyText,
         "password" -> nonEmptyText
       )
   )
+
+  val registerForm = Form(
+      tuple(
+        "email"    -> nonEmptyText,
+        "password" -> nonEmptyText
+      )
+  )
   
-  def login() = Action { request =>
+  def loginIndex() = Action { request =>
     Ok(views.html.login(""))
   }
-  
+
+  def registerIndex() = Action { request =>
+    Ok(views.html.register(""))
+  }
+
   def auth=Action.async( parse.form(loginForm) ){ implicit request =>
     val (email,pass) = request.body
-    val hashedPass = md5(pass)
     for {
-      authUser <- authUserDAO.authUser(email,hashedPass.toString())
+      authUser <- authDAO.authUser(email,pass)
     } yield authUser match {
       case Some(authUser) =>  Ok(views.html.login("Done"))
       case _ => Ok(views.html.login("Incorrect Credential"))
     }
   }
   
-  def register() = Action{ request =>
-     Ok(views.html.register(""))
+  def apiAuth=Action.async{ implicit request =>
+    val param = request.body.asJson.get
+    val email = (param \ "email") .as[String]
+    val pass  = (param \ "pass")  .as[String]
+    for {
+      authUser <- authDAO.getUserByEmail(email)//authUser(email,pass)
+    } yield authUser match {
+      case Some(authUser) => {
+        val result = Json.obj( "apiKey" -> JsString(authUser.apiKey) )
+        Ok(result).as("application/json")
+      }
+      case _ => NotFound
+    }
+  }
+
+  def register=Action.async( parse.form(registerForm) ){ implicit request =>
+    val (email,pass) = request.body
+    for {
+      euser <- authDAO.getUserByEmail(email)
+    } yield euser match {
+      case Some(au) => Ok(views.html.register(s"$email has already been taken"))
+      case None => {
+        val newUser = AuthUser(0L,email,email,pass,"","",new Date)
+        val registeredUser = authDAO.addNewUser(newUser)
+        val newMiningUser = UserFactory.newUser(registeredUser.userId, registeredUser.email) 
+        userDAO.saveUser(newMiningUser)
+        Ok(views.html.register("Done"))
+      }
+    }
   }
   
 }

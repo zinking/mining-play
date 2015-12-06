@@ -1,50 +1,55 @@
 #Home Page
-GET     /                   			controllers.ApplicationController.index
-GET 	/static/*file   				controllers.Assets.at(path="/public", file) 
-GET		/push							controllers.ApplicationController.default
-GET		/tasks/import-opml 				controllers.ApplicationController.default
-GET		/tasks/subscribe-feed 			controllers.ApplicationController.default
-GET		/tasks/update-feed-last 		controllers.ApplicationController.default
-GET		/tasks/update-feed-manual 		controllers.ApplicationController.default
-GET		/tasks/update-feed 				controllers.ApplicationController.default
-GET		/tasks/update-feeds 			controllers.ApplicationController.default
-GET		/tasks/delete-old-feeds 		controllers.ApplicationController.default
-GET		/tasks/delete-old-feed 			controllers.ApplicationController.default
+GET         /                                controllers.ApplicationController.index
+GET         /static/*file                    controllers.Assets.at(path="/public", file)
+GET         /push                            controllers.ApplicationController.default
+GET         /tasks/import-opml               controllers.ApplicationController.default
+GET         /tasks/subscribe-feed            controllers.ApplicationController.default
+GET         /tasks/update-feed-last          controllers.ApplicationController.default
+GET         /tasks/update-feed-manual        controllers.ApplicationController.default
+GET         /tasks/update-feed               controllers.ApplicationController.default
+GET         /tasks/update-feeds              controllers.ApplicationController.default
+GET         /tasks/delete-old-feeds          controllers.ApplicationController.default
+GET         /tasks/delete-old-feed           controllers.ApplicationController.default
 
-POST	/user/add-subscription 			controllers.UserController.addSubscription
+POST        /user/add-subscription           controllers.UserController.addSubscription
 
-GET		/user/export-opml 				controllers.UserController.exportOPML
-POST	/user/import-opml 				controllers.UserController.importOPML
-POST	/user/upload-opml 				controllers.UserController.uploadOPML
-GET		/user/feed-history 				controllers.UserController.feedHistory
-POST	/user/get-contents 				controllers.UserController.getContents
+GET         /user/export-opml                controllers.UserController.exportOPML
+POST        /user/import-opml                controllers.UserController.importOPML
+POST        /user/upload-opml                controllers.UserController.uploadOPML
+GET         /user/feed-history               controllers.UserController.feedHistory
+POST        /user/get-contents               controllers.UserController.getContents
 
-POST	/user/get-feed 					controllers.UserController.getFeed
-POST	/user/get-stars 				controllers.UserController.getStars
+POST        /user/get-feed                   controllers.UserController.getFeed
+POST        /user/get-stars                  controllers.UserController.getStars
 
-GET 	/user/list-feeds 				controllers.UserController.listFeeds
-POST	/user/mark-read 				controllers.UserController.markRead
-POST	/user/mark-unread 				controllers.UserController.markUnread
-POST	/user/save-options 				controllers.UserController.saveOptions
-POST	/user/set-star 					controllers.UserController.setStar
+GET         /user/list-feeds                 controllers.UserController.listFeeds
+POST        /user/mark-read                  controllers.UserController.markRead
+POST        /user/mark-unread                controllers.UserController.markUnread
+POST        /user/save-options               controllers.UserController.saveOptions
+POST        /user/set-star                   controllers.UserController.setStar
 
-GET		/user/charge 					controllers.UserController.charge
-GET		/user/account 					controllers.UserController.account
-GET		/user/uncheckout 				controllers.UserController.unCheckout
+GET         /user/charge                     controllers.UserController.charge
+GET         /user/account                    controllers.UserController.account
+GET         /user/uncheckout                 controllers.UserController.unCheckout
 
-POST	/user/delete-account 			controllers.UserController.deleteAccount
-GET		/admin/all-feeds 				controllers.ApplicationController.default
-GET		/admin/all-feeds-opml 			controllers.ApplicationController.default
-GET		/admin/user 					controllers.ApplicationController.default
-GET		/date-formats 					controllers.ApplicationController.default
-GET		/admin/feed 					controllers.ApplicationController.default
-GET		/admin/subhub 					controllers.ApplicationController.default
-GET		/admin/stats 					controllers.ApplicationController.default
-GET		/admin/update-feed 				controllers.ApplicationController.default
+POST        /user/delete-account             controllers.UserController.deleteAccount
+GET         /admin/all-feeds                 controllers.ApplicationController.default
+GET         /admin/all-feeds-opml            controllers.ApplicationController.default
+GET         /admin/user                      controllers.ApplicationController.default
+GET         /date-formats                    controllers.ApplicationController.default
+GET         /admin/feed                      controllers.ApplicationController.default
+GET         /admin/subhub                    controllers.ApplicationController.default
+GET         /admin/stats                     controllers.ApplicationController.default
+GET         /admin/update-feed               controllers.ApplicationController.default
 
 # User Management
-GET     /login                          controllers.AuthUserController.login
-POST    /login                          controllers.AuthUserController.auth
+GET         /login                           controllers.AuthUserController.loginIndex
+POST        /login                           controllers.AuthUserController.auth
+POST        /loginApi                        controllers.AuthUserController.apiAuth
+GET         /register                        controllers.AuthUserController.registerIndex
+POST        /register                        controllers.AuthUserController.register
+
+
 #GET     /logout                     securesocial.controllers.LoginPage.logout
 #GET     /signup                     securesocial.controllers.Registration.startSignUp
 #POST    /signup                     securesocial.controllers.Registration.handleStartSignUp

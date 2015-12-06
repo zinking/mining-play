@@ -1,8 +1,6 @@
 package controllers
 
-import play.api.http.HeaderNames
 import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.Specification
 import org.specs2.matcher.ShouldMatchers
 import play.api.test.WithApplication
 import org.junit.runner.RunWith
@@ -18,11 +16,10 @@ class ApplicationControllerSpec extends PlaySpecification with ShouldMatchers {
       app2ApplicationController(app)
   }  
   
-  "Access secured index " in new WithApplication{
+  "Access secured page without credential should 404 " in new WithApplication{
     val html = applicationController.index()(FakeRequest())
-    status(html) must be equalTo OK
-    contentType(html).get must equalTo("text/html")
+    status(html) must be equalTo NOT_FOUND
+    //contentType(html).get must equalTo("text/html")
   }
-  
 }
 
