@@ -12,6 +12,8 @@ GET         /tasks/delete-old-feeds          controllers.ApplicationController.d
 GET         /tasks/delete-old-feed           controllers.ApplicationController.default
 
 POST        /user/add-subscription           controllers.UserController.addSubscription
+POST        /user/remove-subscription        controllers.UserController.removeSubscription
+POST        /user/preview-subscription       controllers.UserController.previewSubscription
 
 GET         /user/export-opml                controllers.UserController.exportOPML
 POST        /user/import-opml                controllers.UserController.importOPML
@@ -26,7 +28,7 @@ GET         /user/list-feeds                 controllers.UserController.listFeed
 POST        /user/mark-read                  controllers.UserController.markRead
 POST        /user/mark-unread                controllers.UserController.markUnread
 POST        /user/save-options               controllers.UserController.saveOptions
-POST        /user/set-star                   controllers.UserController.setStar
+POST        /user/set-star                   controllers.UserController.markStar
 
 GET         /user/charge                     controllers.UserController.charge
 GET         /user/account                    controllers.UserController.account
@@ -48,6 +50,7 @@ POST        /login                           controllers.AuthUserController.auth
 POST        /loginApi                        controllers.AuthUserController.apiAuth
 GET         /register                        controllers.AuthUserController.registerIndex
 POST        /register                        controllers.AuthUserController.register
+POST        /registerApi                     controllers.AuthUserController.apiRegister
 
 
 #GET     /logout                     securesocial.controllers.LoginPage.logout

@@ -1,6 +1,6 @@
 package models
 
-import mining.io.{Opml, OpmlOutline, Story}
+import mining.io.{Feed, Opml, OpmlOutline, Story}
 import play.api.libs.json._
 
 /**
@@ -9,7 +9,8 @@ import play.api.libs.json._
 object JsonUtils {
     implicit val storyWrites = new Writes[Story] {
         def writes(story: Story) = Json.obj(
-            "Id" -> story.link,
+            "Id" -> story.id,
+            "FeedId" -> story.feedId,
             "Title" -> story.title,
             "Link" -> story.link,
             "Updated" -> story.updated.toString,
@@ -17,6 +18,13 @@ object JsonUtils {
             "Author" -> story.author,
             //"Content" -> JsString(node.content),
             "Summary" -> story.description
+        )
+    }
+
+    implicit val feedWrites = new Writes[Feed] {
+        def writes(feed: Feed) = Json.obj(
+            "Id" -> feed.feedId,
+            "XmlUrl" -> feed.xmlUrl
         )
     }
 

@@ -39,7 +39,7 @@ class ZhangsanUserController extends UserController{
 
 @RunWith(classOf[JUnitRunner])
 class UserControllerSpec extends PlaySpecification with ShouldMatchers{
-    Properties.setProp("runMode", "test")
+    Properties.setProp("env", "test")
     def sampleOpml:String = {
         val dom:Elem  =
             <opml version="1.0">
@@ -125,12 +125,21 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         contentAsString(xmlresult ) must contain( "http://www.beedigital.net/blog/?feed=rss2" )
     }
 
+    "zhangsan should be able to preview subscription" in new WithApplication {
+        val feedUrl = "http://coolshell.cn/feed"
+        val jsonparams = Json.parse(s"""{"url":"http://coolshell.cn/feed"}""")
+        val request = FakeRequest( POST, "/user/preview-subscription").withJsonBody(jsonparams )
+        val jsonresult = userController.previewSubscription()(request)
+        status(jsonresult) must be equalTo OK
+        contentType(jsonresult).get must equalTo("application/json")
+        contentAsString(jsonresult ) must contain( feedUrl )
+        val result = contentAsJson(jsonresult)
+        ( result \ "Stories" ).as[JsArray].value.size must be greaterThan 0
+    }
+
     "zhangsan should be able to add subscription" in new WithApplication {
-        val request = FakeRequest( POST, "/user/add-subscription")
-    		.withHeaders( CONTENT_TYPE -> "application/x-www-form-urlencoded" )
-    		//.withFormUrlEncodedBody( "url"->"http://coolshell.cn/feed")
-    		.withFormUrlEncodedBody( "url"->sampleFeed)
-        //val Some( jsonresult ) = route( request )
+        val jsonparams = Json.parse("""{"url":"http://coolshell.cn/feed"}""")
+        val request = FakeRequest( POST, "/user/add-subscription").withJsonBody(jsonparams )
         val jsonresult = userController.addSubscription()(request)
         status(jsonresult) must be equalTo OK
         contentType(jsonresult).get must equalTo("application/json")
@@ -228,7 +237,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         val page0 = ( result \ "Stories" ).as[List[JsValue]]
         val page0head = page0.head
 
-        sampleStory = (page0head \ "Id").as[String]
+        sampleStory = (page0head \ "Link").as[String]
 
         val jparam2 = Json.obj(
             "F"->sampleFeed,
@@ -250,7 +259,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         status(jsonresult) must be equalTo OK
         contentType(jsonresult).get must equalTo("application/json")
         val result = contentAsString(jsonresult)
-        result must contain ("42")
+        result must contain ("cool")
     }
 
     /*"zhangsan should be able to get a list of story contents of a feed" in {

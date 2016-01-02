@@ -1,25 +1,47 @@
 package actors
 
-import akka.actor.{Actor, Props}
+import java.util.Date
+
+import akka.actor.{ActorLogging, Actor, Props}
+import com.typesafe.config.{ConfigFactory, Config}
 import mining.io.dao.FeedDao
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.concurrent.{ExecutionContext, Future}
+import ExecutionContext.Implicits.global
 
 /**
  * Created by awang on 30/8/15.
  */
-object FeedRefreshManager {
-  def props = Props[FeedRefreshManager]
 
-  case class RefreshAllFeeds()
+case class RefreshAllFeeds()
+
+object FeedRefreshManager {
+    def props = Props[FeedRefreshManager]
+    val conf:Config = ConfigFactory.load
+    val venv = conf.getString("env")
+    val env = Option(System.getProperty("env")).getOrElse(venv)
+    val feedChgInt = conf.getConfig(env).getInt("feedchg-int")
+    val refreshInt = conf.getConfig(env).getInt("refresh-int")
+
+    val refreshAllMsg = RefreshAllFeeds()
 }
 
-class FeedRefreshManager extends Actor {
-  import FeedRefreshManager._
-  val feedDAO = FeedDao()
+class FeedRefreshManager extends Actor with ActorLogging {
+    val feedDAO = FeedDao()
+    context.system.scheduler.schedule(
+        0 seconds, FeedRefreshManager.refreshInt seconds, self, FeedRefreshManager.refreshAllMsg)
 
-  def receive = {
-    case RefreshAllFeeds() =>
-        feedDAO.getAllFeeds.foreach( feed=>
-            feedDAO.createOrUpdateFeed( feed.url )
-        )
-  }
+
+    def receive = {
+        case msg:RefreshAllFeeds =>
+            val now = new Date
+            feedDAO.getAllFeeds.foreach{feed=>
+                val duration = System.currentTimeMillis() - feed.checked.getTime
+                if (duration>FeedRefreshManager.feedChgInt*1000){
+                    log.info("Refresh feed {}",feed)
+                    feedDAO.createOrUpdateFeed(feed.xmlUrl)
+                }
+            }
+    }
 }

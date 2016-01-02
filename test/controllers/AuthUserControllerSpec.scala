@@ -10,8 +10,11 @@ import play.api.Application
 import scala.concurrent.Future
 import play.api.mvc.Result
 
+import scala.util.Properties
+
 @RunWith(classOf[JUnitRunner])
 class AuthUserControllerSpec extends PlaySpecification with ShouldMatchers {
+    Properties.setProp("env", "test")
 
     def authUserController(implicit app: Application) = {
         val app2ApplicationController = Application.instanceCache[controllers.AuthUserController]

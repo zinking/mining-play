@@ -6,6 +6,7 @@ import models.JsonUtils._
 import org.apache.commons.io.FileUtils
 import play.api.libs.json._
 import play.api.mvc.Action
+import play.api.Logger
 
 
 class UserController extends MiningController {
@@ -73,7 +74,8 @@ class UserController extends MiningController {
         val opmllist = Json.toJson(opml)
         val feedStories: Iterable[Story] = feedDAO.getOpmlStories(opml)
         //val feedStoriesMap:Map[String,Iterable[Story]] = feedStories.groupBy(_.feedId.toString)
-        val feeds = opml.getAllOutlines()
+        val feeds = opml.getAllOutlines
+        val feedIds = feedDAO.getOpmlFeeds(opml)
         val stars = userDAO.getUserStarStories(uid)
 
         //TODO: unreadDate concept.
@@ -84,6 +86,7 @@ class UserController extends MiningController {
             //"Stories" -> FeedStoryMap2JsObject(feedStoriesMap),
             "Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
             "Feeds" -> Json.toJson(feeds.map(Json.toJson(_))),
+            "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))),
             "Stars" -> Json.toJson(stars.map(s => JsString(s.link)))
         )
         Ok(indexContent).as("application/json")
@@ -139,17 +142,46 @@ class UserController extends MiningController {
         Ok("1").as("application/json")
     }
 
+    def previewSubscription() = AuthAction { (user,request)  =>
+        //val url = request.body.asFormUrlEncoded.get("url").head
+        val param = request.body.asJson.get
+        val url = (param \ "url") .as[String]
+        val feedp = feedDAO.createOrUpdateFeed(url)
+        val feedStories: Iterable[Story] = feedDAO.getFeedStories(url)
+        val subscriptionContent = Json.obj(
+            "FeedUrl" -> JsString(url),
+            "Stories" -> Json.toJson(feedStories.map(Json.toJson(_)))
+        )
+        Ok(subscriptionContent).as("application/json")
+    }
+
     def addSubscription() = AuthAction { (user,request)  =>
         //1. update the feed in the system
         //2. record the feed in user's inventory
         //TODO: drastically simplified scenario
         //val url = request.getQueryString("url").get
-        val url = request.body.asFormUrlEncoded.get("url").head
-        val feedp = feedDAO.createOrUpdateFeed(url) //TODO: throw catch
-        //val uid = user.email
-        userDAO.addOmplOutline(user.userId, feedp.outline)
+        //val url = request.body.asFormUrlEncoded.get("url").head
+        val param = request.body.asJson.get
+        val url = (param \ "url") .as[String]
+        feedDAO.getRawOutlineFromFeed(url) match {
+            case Some(opmlOutline) =>
+                userDAO.addOmplOutline(user.userId, opmlOutline)
+                val subscriptionContent = Json.obj(
+                    "data" -> "Subscripton Added"
+                )
+                Ok(subscriptionContent).as("application/json")
+            case None =>
+                Logger.error("Requested Subscription doesn't exist")
+                BadRequest
+        }
+    }
+
+    def removeSubscription() = AuthAction { (user,request)  =>
+        val param = request.body.asJson.get
+        val url = (param \ "url") .as[String]
+        userDAO.removeOmplOutline(user.userId, url)
         val subscriptionContent = Json.obj(
-            "data" -> "Subscripton Added"
+            "data" -> "Subscripton Removed"
         )
         Ok(subscriptionContent).as("application/json")
     }

@@ -8,9 +8,11 @@ import play.api.test.PlaySpecification
 import play.api.test.FakeRequest
 import play.api.Application
 
+import scala.util.Properties
+
 @RunWith(classOf[JUnitRunner])
 class ApplicationControllerSpec extends PlaySpecification with ShouldMatchers {
-
+  Properties.setProp("env", "test")
   def applicationController(implicit app: Application) = {
       val app2ApplicationController = Application.instanceCache[controllers.ApplicationController]
       app2ApplicationController(app)

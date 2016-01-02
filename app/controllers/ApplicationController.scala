@@ -6,11 +6,17 @@ import com.google.inject.Inject
 import mining.io.User
 import mining.io.dao.UserDao
 import mining.model.dao.AuthUserDao
+import play.api.libs.json.JsResultException
 
 import play.api.mvc._
 import play.api.Logger
 
+import scala.concurrent.duration._
 import scala.language.postfixOps
+
+import scala.concurrent.{ExecutionContext, Future}
+import ExecutionContext.Implicits.global
+import javax.inject._
 
 
 trait MiningController extends Controller {
@@ -24,7 +30,13 @@ trait MiningController extends Controller {
             getCurrentUser(request) match {
                 case Some(user) =>
                     Logger.info("Calling action")
-                    f(user,request)
+                    try{
+                        f(user,request)
+                    } catch {
+                        case e:JsResultException=>
+                            BadRequest
+
+                    }
                 case _ =>
                     val remoteIp = request.headers.get("Rmote_Addr")
                     val key = request.headers.get(apiKey)
@@ -43,10 +55,7 @@ trait MiningController extends Controller {
     }
 }
 
-class ApplicationController @Inject() (system: ActorSystem) extends MiningController {
-    val feedRefreshManagerActor = system.actorOf(FeedRefreshManager.props, "feed-refresh-actor")
-    //system.scheduler.schedule( 0 seconds, 12 hours, feedRefreshManagerActor, FeedRefreshManager.RefreshAllFeeds)
-
+class ApplicationController () extends MiningController {
     def index = AuthAction { (user,request) =>
         Ok("hello")
     }
