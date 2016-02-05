@@ -143,7 +143,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         val jsonresult = userController.addSubscription()(request)
         status(jsonresult) must be equalTo OK
         contentType(jsonresult).get must equalTo("application/json")
-        contentAsString(jsonresult ) must contain( "Subscripton Added" )
+        contentAsString(jsonresult ) must contain( "1" )
     }
 
     "zhangsan should be able to list feeds" in new WithApplication {
@@ -227,11 +227,11 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
         )
         val request = FakeRequest( POST, "/user/get-feed").withJsonBody(jsonparams )
 
-        val jsonresult = userController.getFeed()(request)
+        val jsonresult = userController.getFeedStories()(request)
         status(jsonresult) must be equalTo OK
         contentType(jsonresult).get must equalTo("application/json")
         val result = contentAsJson(jsonresult)
-        ( result \ "Cursor" ).as[Int]  must be equalTo 1
+        ( result \ "Cursor" ).as[Int]  must be equalTo 0
         ( result \ "Stories" ).as[JsArray].value.size must be greaterThan 0
         //( result \ "feeds" ).as[JsArray].value.size must be greaterThan( 0 )
         val page0 = ( result \ "Stories" ).as[List[JsValue]]
@@ -244,7 +244,7 @@ class UserControllerSpec extends PlaySpecification with ShouldMatchers{
             "C"->1
         )
         val rq2 = FakeRequest( POST, "/user/get-feed").withJsonBody(jparam2 )
-        val jr2 = userController.getFeed()(rq2)
+        val jr2 = userController.getFeedStories()(rq2)
         val r2 = contentAsJson(jr2)
         val page1 = ( r2 \ "Stories" ).as[List[JsValue]]
         val page1head = page1.head

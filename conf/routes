@@ -21,8 +21,8 @@ POST        /user/upload-opml                controllers.UserController.uploadOP
 GET         /user/feed-history               controllers.UserController.feedHistory
 POST        /user/get-contents               controllers.UserController.getContents
 
-POST        /user/get-feed                   controllers.UserController.getFeed
-POST        /user/get-stars                  controllers.UserController.getStars
+POST        /user/get-feed                   controllers.UserController.getFeedStories
+POST        /user/get-stars                  controllers.UserController.getStarStories
 
 GET         /user/list-feeds                 controllers.UserController.listFeeds
 POST        /user/mark-read                  controllers.UserController.markRead

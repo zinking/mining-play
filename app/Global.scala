@@ -4,6 +4,7 @@ import play.libs.Akka
 import play.api._
 
 /**
+ * Override global setting
  * Created by awang on 2/1/16.
  */
 object Global extends GlobalSettings {

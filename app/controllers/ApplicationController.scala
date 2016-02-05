@@ -1,8 +1,5 @@
 package controllers
 
-import actors.FeedRefreshManager
-import akka.actor.ActorSystem
-import com.google.inject.Inject
 import mining.io.User
 import mining.io.dao.UserDao
 import mining.model.dao.AuthUserDao
@@ -11,12 +8,8 @@ import play.api.libs.json.JsResultException
 import play.api.mvc._
 import play.api.Logger
 
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
-import scala.concurrent.{ExecutionContext, Future}
-import ExecutionContext.Implicits.global
-import javax.inject._
 
 
 trait MiningController extends Controller {

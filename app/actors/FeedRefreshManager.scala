@@ -11,6 +11,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import ExecutionContext.Implicits.global
 
 /**
+ * Feed refresh mananger
+ *
  * Created by awang on 30/8/15.
  */
 
@@ -20,7 +22,7 @@ object FeedRefreshManager {
     def props = Props[FeedRefreshManager]
     val conf:Config = ConfigFactory.load
     val venv = conf.getString("env")
-    val env = Option(System.getProperty("env")).getOrElse(venv)
+    val env = Option(System.getenv("env")).getOrElse(venv)
     val feedChgInt = conf.getConfig(env).getInt("feedchg-int")
     val refreshInt = conf.getConfig(env).getInt("refresh-int")
 
