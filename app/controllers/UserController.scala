@@ -77,6 +77,32 @@ class UserController extends MiningController {
         Ok(feedContent).as("application/json")
     }
 
+    /**
+     * get the stories of the feed
+     * input data params format: {C:pageNo,F:xmlUrl}
+     * @return feed stories
+     *         result format: { Cursor:pageNo, Stories:[Story], Stars:[htmlLink]}
+     */
+    def getFeedsStories = AuthAction { (user,request)  =>
+        //get stories of a feed, with cursor/offset
+        val uid = user.userId
+        val param = request.body.asJson.get
+        val c = (param \ "C").as[Int]
+        val fs = (param \ "FS").as[List[String]]
+        val stories:List[Story] = fs.flatMap{ xmlUrl =>
+            feedDAO.getFeedStories(xmlUrl, pageNo = c)
+        }
+        //TODO:Question here is how is user's read/unread info dealt with
+        val stars = userDAO.getUserStarStories(uid, pageNo = c)
+        val feedContent = Json.obj(
+            "Cursor" -> JsNumber(c),
+            "Stories" -> Json.toJson(stories.map(Json.toJson(_))),
+            "Stars" -> Json.toJson(stars.map(s => JsString(s.link))))
+
+        Logger.info(s"USER[${user.userId}] getFeedsStories ${stories.size} stories of page $c ")
+        Ok(feedContent).as("application/json")
+    }
+
 
     /**
      * list user feeds and stories at homepage

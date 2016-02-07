@@ -32,7 +32,7 @@ object FeedRefreshManager {
 class FeedRefreshManager extends Actor with ActorLogging {
     val feedDAO = FeedDao()
     context.system.scheduler.schedule(
-        0 seconds, FeedRefreshManager.refreshInt seconds, self, FeedRefreshManager.refreshAllMsg)
+        FeedRefreshManager.refreshInt seconds, FeedRefreshManager.refreshInt seconds, self, FeedRefreshManager.refreshAllMsg)
 
 
     def receive = {
