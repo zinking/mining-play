@@ -27,7 +27,7 @@ class AuthUserController () extends MiningController {
         "password" -> nonEmptyText
       )
   )
-  
+
   def loginIndex() = Action { request =>
     Ok(views.html.login(""))
   }
@@ -45,7 +45,7 @@ class AuthUserController () extends MiningController {
       case _ => Ok(views.html.login("Incorrect Credential"))
     }
   }
-  
+
   def apiAuth=Action.async{ implicit request =>
     val param = request.body.asJson.get
     try{
@@ -74,13 +74,12 @@ class AuthUserController () extends MiningController {
       euser <- authDAO.getUserByEmail(email)
     } yield euser match {
       case Some(au) => Ok(views.html.register(s"$email has already been taken"))
-      case None => {
+      case None =>
         val newUser = AuthUser(0L,email,email,pass,"","",new Date)
         val registeredUser = authDAO.addNewUser(newUser)
-        val newMiningUser = UserFactory.newUser(registeredUser.userId, registeredUser.email) 
+        val newMiningUser = UserFactory.newUser(registeredUser.userId, registeredUser.email)
         userDAO.saveUser(newMiningUser)
         Ok(views.html.register("Done"))
-      }
     }
   }
 
@@ -110,5 +109,5 @@ class AuthUserController () extends MiningController {
         Ok(result).as("application/json")
     }
   }
-  
+
 }

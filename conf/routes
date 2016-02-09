@@ -23,13 +23,14 @@ POST        /user/get-contents               controllers.UserController.getConte
 
 POST        /user/get-feedstories            controllers.UserController.getFeedStories
 POST        /user/get-feedsstories           controllers.UserController.getFeedsStories
-POST        /user/get-starstories            controllers.UserController.getStarStories
+POST        /user/get-starstories            controllers.UserController.getFollowStarStories
 
 GET         /user/list-feeds                 controllers.UserController.listFeeds
+GET         /user/list-starfeeds             controllers.UserController.listStarFeeds
 POST        /user/mark-read                  controllers.UserController.markRead
-POST        /user/mark-unread                controllers.UserController.markUnread
+POST        /user/mark-feedread              controllers.UserController.markFeedRead
 POST        /user/save-options               controllers.UserController.saveOptions
-POST        /user/set-star                   controllers.UserController.markStar
+POST        /user/mark-star                   controllers.UserController.markStar
 
 GET         /user/charge                     controllers.UserController.charge
 GET         /user/account                    controllers.UserController.account
@@ -52,6 +53,10 @@ POST        /loginApi                        controllers.AuthUserController.apiA
 GET         /register                        controllers.AuthUserController.registerIndex
 POST        /register                        controllers.AuthUserController.register
 POST        /registerApi                     controllers.AuthUserController.apiRegister
+
+
+# Temp Admin Command
+POST        /user/verify-subscription        controllers.UserController.verifySubscription
 
 
 #GET     /logout                     securesocial.controllers.LoginPage.logout

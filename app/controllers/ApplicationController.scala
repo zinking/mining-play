@@ -11,7 +11,6 @@ import play.api.Logger
 import scala.language.postfixOps
 
 
-
 trait MiningController extends Controller {
     def db = scala.util.Properties.envOrElse("MININGENV", "prod" )
     val userDAO = UserDao()
@@ -28,7 +27,8 @@ trait MiningController extends Controller {
                     } catch {
                         case e:JsResultException=>
                             BadRequest
-
+                        case _:Throwable =>
+                            InternalServerError
                     }
                 case _ =>
                     val remoteIp = request.headers.get("Rmote_Addr")

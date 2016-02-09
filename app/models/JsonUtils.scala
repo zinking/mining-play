@@ -1,6 +1,6 @@
 package models
 
-import mining.io.{Feed, Opml, OpmlOutline, Story}
+import mining.io._
 import play.api.libs.json._
 
 /**
@@ -16,10 +16,20 @@ object JsonUtils {
             "Title"     -> story.title,
             "Link"      -> story.link,
             "Updated"   -> story.updated.toString,
-            "Published" -> (story.published.getTime / 1000.0f).toString,
+            "Published" -> story.published.getTime / 1000.0f,
             "Author"    -> story.author,
             //"Content" -> JsString(node.content),
-            "Summary"   -> story.description
+            "Summary"   -> story.getSummary //TODO: dont even fetch data from database
+            //"Summary"   -> story.description
+        )
+    }
+
+    implicit val userFeedReadStatWrites = new Writes[UserFeedReadStat] {
+        def writes(feedStat:UserFeedReadStat) = Json.obj (
+            "UserId"    -> feedStat.userId,
+            "FeedId"    -> feedStat.feedId,
+            "StartFrom" -> feedStat.startFrom.getTime / 1000.0f,
+            "UnreadCount" -> feedStat.unreadCount
         )
     }
 
