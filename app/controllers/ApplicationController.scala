@@ -27,8 +27,7 @@ trait MiningController extends Controller {
                     } catch {
                         case e:JsResultException=>
                             BadRequest
-                        case _:Throwable =>
-                            InternalServerError
+                        
                     }
                 case _ =>
                     val remoteIp = request.headers.get("Rmote_Addr")
