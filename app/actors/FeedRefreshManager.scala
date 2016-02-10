@@ -41,8 +41,14 @@ class FeedRefreshManager extends Actor with ActorLogging {
             feedDAO.getAllFeeds.foreach{feed=>
                 val duration = System.currentTimeMillis() - feed.checked.getTime
                 if (duration>FeedRefreshManager.feedChgInt*1000){
-                    log.info("Refresh feed {}",feed)
-                    feedDAO.createOrUpdateFeed(feed.xmlUrl)
+                    log.info("Refresh feed {}",feed.xmlUrl)
+                    try{
+                        feedDAO.createOrUpdateFeed(feed.xmlUrl)
+                    } catch {
+                        case e:Throwable =>
+                            log.error(e.getMessage,e)
+                    }
+
                 }
             }
     }

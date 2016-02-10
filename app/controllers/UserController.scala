@@ -406,11 +406,12 @@ class UserController extends MiningController {
                     val content_type = opmlfile.contentType
                     content_type match {
                         case Some("text/xml") | Some("application/xml") =>
-                            val xmlContent = FileUtils.readFileToString(opmlfile.ref.file)
+                            val xmlContent = FileUtils.readFileToString(opmlfile.ref.file,"UTF-8")
                             val opml = OpmlStorage(user.userId, xmlContent).toOpml
                             val mergedOpml = userDAO.mergeWithUserOpml(opml)
                             FeedFactory.newFeeds(mergedOpml).map{newFeed=>
-                                feedDAO.verifyAndCreateFeed(newFeed)
+                                val savedFeed:Feed=feedDAO.verifyAndCreateFeed(newFeed)
+                                userDAO.setUserFeedStat(user.userId, savedFeed.feedId)
                             }
                             Logger.info(s"USER[${user.userId}] importOPML merged new feeds")
                             Ok("1").as("application/json")
