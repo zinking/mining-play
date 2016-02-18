@@ -156,12 +156,12 @@ class UserController extends MiningController {
         val userStarStoryIds = userDAO.getUserStarStories(uid, storyIds)
         val indexContent = Json.obj(
             "Opml" -> Json.toJson(opmllist),
-            "Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
+            //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
             "Feeds" -> Json.toJson(feeds.map(Json.toJson(_))),
             "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))), //TODO: refactor, user subscription should from feed object itself, not opml
-            "UserReadFeedStats" -> Json.toJson(feedStats.map(Json.toJson(_))),
-            "UserReadStoryIds" -> Json.toJson(userReadStoryIds),
-            "UserStarStoryIds" -> Json.toJson(userStarStoryIds)
+            "UserReadFeedStats" -> Json.toJson(feedStats.map(Json.toJson(_)))
+            //"UserReadStoryIds" -> Json.toJson(userReadStoryIds),
+            //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
         Logger.info(s"USER[${user.userId}] listFeeds ${feedStories.size} stories, ${feeds.size} feeds ")
@@ -209,12 +209,12 @@ class UserController extends MiningController {
         val userStarStoryIds = storyIds
         val indexContent = Json.obj(
             "StarOpml" -> Json.toJson(opmllist),
-            "Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
+            //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
             "Feeds" -> Json.toJson(feeds.map(Json.toJson(_))),
-            "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))), //TODO: refactor, user subscription should from feed object itself, not opml
+            "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))) //TODO: refactor, user subscription should from feed object itself, not opml
             //"UserReadFeedStats" -> Json.toJson(feedStats.map(Json.toJson(_))),
-            "UserReadStoryIds" -> Json.toJson(userReadStoryIds),
-            "UserStarStoryIds" -> Json.toJson(userStarStoryIds)
+            //"UserReadStoryIds" -> Json.toJson(userReadStoryIds),
+            //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
         Logger.info(s"USER[${user.userId}] list star Feeds ${feedStories.size} stories, ${feeds.size} feeds ")
