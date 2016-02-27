@@ -29,8 +29,9 @@ GET         /user/list-feeds                 controllers.UserController.listFeed
 GET         /user/list-starfeeds             controllers.UserController.listStarFeeds
 POST        /user/mark-read                  controllers.UserController.markRead
 POST        /user/mark-feedread              controllers.UserController.markFeedRead
+POST        /user/mark-feedsread             controllers.UserController.markFeedsRead
 POST        /user/save-options               controllers.UserController.saveOptions
-POST        /user/mark-star                   controllers.UserController.markStar
+POST        /user/mark-star                  controllers.UserController.markStar
 
 GET         /user/charge                     controllers.UserController.charge
 GET         /user/account                    controllers.UserController.account

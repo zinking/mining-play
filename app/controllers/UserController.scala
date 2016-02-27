@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils
 import play.api.libs.json._
 import play.api.mvc.Action
 import play.api.Logger
+import play.cache.Cached
 
 class UserController extends MiningController {
     val feedDAO = FeedDao()
@@ -118,16 +119,15 @@ class UserController extends MiningController {
 
         val stories:List[Story] = fs.flatMap{ xmlUrl =>
             val stories:Option[Iterable[Story]] = getMineUserFromUrl(xmlUrl) flatMap { user =>
-                val starStories = userDAO.getUserStarStories(user.userId)
-                starStories.map{ story=>
+                val starStories = userDAO.getUserStarStories(user.userId, pageNo = c)
+                Some(starStories.map{ story=>
                     story.copy(feedId = -user.userId, id = -story.id)
-                }
-                Some(starStories)
+                })
             }
             stories.getOrElse(List.empty)
         }
         val storyIds:List[Long] = stories.map(_.id)
-        val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
+        val userReadStoryIds = storyIds //starred stories are all read
         val userStarStoryIds = storyIds
         val feedContent = Json.obj(
             "Cursor" -> JsNumber(c),
@@ -147,13 +147,13 @@ class UserController extends MiningController {
         val uid = user.userId
         val opml: Opml = userDAO.getUserOpml(uid).getOrElse(new Opml(uid, Nil))
         val opmllist = Json.toJson(opml)
-        val feedStories: Iterable[Story] = feedDAO.getOpmlStories(opml)
+        //val feedStories: Iterable[Story] = feedDAO.getOpmlStories(opml)
         val feeds = opml.getAllOutlines
         val feedIds = feedDAO.getOpmlFeeds(opml)
         val feedStats = userDAO.getUserFeedUnreadSummary(uid)
-        val storyIds:List[Long] = feedStories.map(_.id).toList
-        val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
-        val userStarStoryIds = userDAO.getUserStarStories(uid, storyIds)
+        //val storyIds:List[Long] = feedStories.map(_.id).toList
+        //val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
+        //val userStarStoryIds = userDAO.getUserStarStories(uid, storyIds)
         val indexContent = Json.obj(
             "Opml" -> Json.toJson(opmllist),
             //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
@@ -164,7 +164,7 @@ class UserController extends MiningController {
             //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
-        Logger.info(s"USER[${user.userId}] listFeeds ${feedStories.size} stories, ${feeds.size} feeds ")
+        Logger.info(s"USER[${user.userId}] listFeeds ${feeds.size} feeds ")
         Ok(indexContent).as("application/json")
     }
 
@@ -184,7 +184,7 @@ class UserController extends MiningController {
         val opml: Opml = Opml(-user.userId, followOutlines)
         val opmllist = Json.toJson(opml)
         val n = followUsers.size
-        val feedStories:Iterable[Story] = (0 to n-1).flatMap{i=>
+        /*val feedStories:Iterable[Story] = (0 to n-1).flatMap{i=>
             val user = followUsers(i)
             val outline = followOutlines(i)
             val starStories = userDAO.getUserStarStories(user.userId)
@@ -193,7 +193,7 @@ class UserController extends MiningController {
                 //TODO: there's better structures to do this
                 story.copy(feedId = -user.userId, id = -story.id)
             }
-        }
+        }*/
 
         val feedIds: Iterable[Feed] = (0 to n-1).map{i=>
             val user = followUsers(i)
@@ -204,9 +204,9 @@ class UserController extends MiningController {
         val feeds = opml.getAllOutlines
 
         //val feedStats = userDAO.getUserFeedUnreadSummary(uid)
-        val storyIds:List[Long] = feedStories.map(_.id).toList
-        val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
-        val userStarStoryIds = storyIds
+        //val storyIds:List[Long] = feedStories.map(_.id).toList
+        //val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
+        //val userStarStoryIds = storyIds
         val indexContent = Json.obj(
             "StarOpml" -> Json.toJson(opmllist),
             //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
@@ -217,7 +217,7 @@ class UserController extends MiningController {
             //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
-        Logger.info(s"USER[${user.userId}] list star Feeds ${feedStories.size} stories, ${feeds.size} feeds ")
+        Logger.info(s"USER[${user.userId}] list ${feeds.size} feeds ")
         Ok(indexContent).as("application/json")
     }
 
@@ -243,7 +243,23 @@ class UserController extends MiningController {
 
     /**
      * mark user read specified feed
-     * input data param format: [{StoryId:0,FeedId:0}]
+     * input data param format: [FeedId(L)]
+     * @return 1 if success
+     */
+    def markFeedsRead = AuthAction { (user,request)  =>
+        val uid = user.userId
+        val param = request.body.asJson.get
+        val feedIds = param.as[List[Long]]
+        feedIds.foreach(feedId=>{
+            userDAO.markUserReadFeed(uid,feedId)
+            Logger.info(s"USER[${user.userId}] mark feed $feedId all read ")
+        })
+        Ok("1").as("application/json")
+    }
+
+    /**
+     * mark user read specified feed
+     * input data param format: FeedId(L)
      * @return 1 if success
      */
     def markFeedRead = AuthAction { (user,request)  =>

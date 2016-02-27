@@ -16,7 +16,7 @@ object JsonUtils {
             "Title"     -> story.title,
             "Link"      -> story.link,
             "Updated"   -> story.updated.toString,
-            "Published" -> story.published.getTime / 1000.0f,
+            "Published" -> story.published.getTime,
             "Author"    -> story.author,
             //"Content" -> JsString(node.content),
             "Summary"   -> story.getSummary //TODO: dont even fetch data from database
@@ -26,9 +26,9 @@ object JsonUtils {
 
     implicit val userFeedReadStatWrites = new Writes[UserFeedReadStat] {
         def writes(feedStat:UserFeedReadStat) = Json.obj (
-            "UserId"    -> feedStat.userId,
+            //"UserId"    -> feedStat.userId,
             "FeedId"    -> feedStat.feedId,
-            "StartFrom" -> feedStat.startFrom.getTime / 1000.0f,
+            "StartFrom" -> feedStat.startFrom.getTime,
             "UnreadCount" -> feedStat.unreadCount
         )
     }
