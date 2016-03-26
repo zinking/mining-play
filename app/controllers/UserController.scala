@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.Date
+
 import mining.io._
 import mining.io.dao.FeedDao
 import models.JsonUtils._
@@ -302,6 +304,35 @@ class UserController extends MiningController {
         val star = (param \ "Star").as[Int]
         userDAO.updateUserStoryLike(uid,feedId,storyId,star)
         Logger.info(s"USER[${user.userId}] markStar $storyId ")
+        Ok("1").as("application/json")
+    }
+
+    /**
+     * append a specific story stat
+     * input data param format: [{StoryId:0,FeedId:0}]
+     * @return 1 if success
+     */
+    def appendStoryStats = AuthAction { (user,request)  =>
+        val uid = user.userId
+        val param = request.body.asJson.get
+        val slist = param.as[List[JsObject]]
+        val stats = slist.map(item => {
+            val storyId = (item \ "StoryId").as[Long]
+            val feedId = (item \ "FeedId").as[Long]
+            val content = (item \ "Content").as[String]
+            val action =  (item \ "Action").as[String]
+            val ts = (item \ "TimeStamp").as[Long]
+            UserActionStat(
+                new Date(ts),
+                action,
+                uid,
+                feedId,
+                storyId,
+                content
+            )
+        })
+        userDAO.appendUserActStats(stats)
+        Logger.info(s"USER[${user.userId}] append  ${stats.size} stats")
         Ok("1").as("application/json")
     }
 

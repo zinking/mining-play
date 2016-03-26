@@ -32,6 +32,7 @@ POST        /user/mark-feedread              controllers.UserController.markFeed
 POST        /user/mark-feedsread             controllers.UserController.markFeedsRead
 POST        /user/save-options               controllers.UserController.saveOptions
 POST        /user/mark-star                  controllers.UserController.markStar
+POST        /user/append-stats               controllers.UserController.appendStoryStats
 
 GET         /user/charge                     controllers.UserController.charge
 GET         /user/account                    controllers.UserController.account
