@@ -1,5 +1,7 @@
 package controllers
 
+import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import mining.io.User
 import mining.io.dao.UserDao
 import mining.model.dao.AuthUserDao
@@ -37,6 +39,26 @@ trait MiningController extends Controller {
             }
         }
     }
+
+//    def AuthActionAsync(f: (User,Request[AnyContent]) => Future[Result]) = {
+//        Action.async { request =>
+//            getCurrentUser(request) match {
+//                case Some(user) =>
+//                    Logger.info("Calling action")
+//                    try{
+//                        f(user,request)
+//                    } catch {
+//                        case e:JsResultException=>
+//                            BadRequest
+//                    }
+//                case _ =>
+//                    val remoteIp = request.headers.get("Rmote_Addr")
+//                    val key = request.headers.get(apiKey)
+//                    Logger.info(s"$remoteIp Login Failed with apiKey $key")
+//                    NotFound
+//            }
+//        }
+//    }
 
     def getCurrentUser(request: Request[Object]): Option[User] = {
         request.headers.get(apiKey).flatMap { key =>

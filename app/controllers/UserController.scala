@@ -9,7 +9,9 @@ import org.apache.commons.io.FileUtils
 import play.api.libs.json._
 import play.api.mvc.Action
 import play.api.Logger
-import play.cache.Cached
+import scala.concurrent.duration._
+
+import scala.concurrent.Await
 
 class UserController extends MiningController {
     val feedDAO = FeedDao()
@@ -27,7 +29,6 @@ class UserController extends MiningController {
         val storyContents = jcontents.map(ri => {
             val storyId = (ri \ "StoryId").as[Long]
             val story = feedDAO.getStoryById(storyId)
-            val storyContent = story.content
             Json.obj(
                 "Summary" -> JsString(story.description),
                 "Content" -> JsString(story.content)
@@ -114,7 +115,6 @@ class UserController extends MiningController {
      */
     def getFollowStarStories = AuthAction { (user,request)  =>
         //get stories of a feed, with cursor/offset
-        val uid = user.userId
         val param = request.body.asJson.get
         val c = (param \ "C").as[Int]
         val fs = (param \ "FS").as[List[String]]
@@ -366,7 +366,8 @@ class UserController extends MiningController {
             Logger.info(s"USER[${user.userId}] previewSubscription ${feedStories.size} stories ")
             Ok(subscriptionContent).as("application/json")
         } else {
-            feedDAO.createOrUpdateFeed(url)
+            //TODO: async???
+            Await.result(feedDAO.createOrUpdateFeed(url), 10 seconds)
             val newFeedStories: Iterable[Story] = feedDAO.getFeedStories(url)
             val subscriptionContent = Json.obj(
                 "FeedUrl" -> JsString(url),
@@ -456,7 +457,7 @@ class UserController extends MiningController {
                             val xmlContent = FileUtils.readFileToString(opmlfile.ref.file,"UTF-8")
                             val opml = OpmlStorage(user.userId, xmlContent).toOpml
                             val mergedOpml = userDAO.mergeWithUserOpml(opml)
-                            FeedFactory.newFeeds(mergedOpml).map{newFeed=>
+                            FeedFactory.newFeeds(mergedOpml).foreach{newFeed=>
                                 val savedFeed:Feed=feedDAO.verifyAndCreateFeed(newFeed)
                                 userDAO.setUserFeedStat(user.userId, savedFeed.feedId)
                             }
@@ -490,7 +491,6 @@ class UserController extends MiningController {
     }
 
     def verifySubscription() = AuthAction { (user,request)  =>
-        val param = request.body.asJson.get
         val uid = user.userId
         val opml = userDAO.getUserOpml(uid).get
         val allFeedUrls = opml.allFeedsUrl
