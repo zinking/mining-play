@@ -355,6 +355,92 @@ class UserController extends MiningController {
     }
 
     /**
+     * Arrage feed source accepts user's re-arrangement of his subscription
+     * and apply that to user's subscription
+     * input is :
+     * change = [{
+            'XmlUrl': opml.XmlUrl,
+            'Folder': opml.Folder,
+            'Title': opml.Title,
+            'Delete': opml.Delete
+        }];
+     * @return
+     */
+    def arrangeFeedSource = AuthAction { (user,request)  =>
+        val param = request.body.asJson.get
+        val changes = (param \ "changes") .as[List[JsObject]]
+        val opmlChanges:List[OpmlChange] = changes.map{change=>
+            val xmlUrl = (change \ "XmlUrl") .as[String]
+            val folder = (change \ "Folder") .as[String]
+            val title = (change \ "Title") .as[String]
+            val delete = (change \ "Delete") .as[Boolean]
+            OpmlChange(xmlUrl,folder,title,delete)
+        }
+
+        userDAO.applyOpmlChanges(user.userId, opmlChanges)
+        Ok("1").as("application/json")
+    }
+
+    /**
+    * Server side will return all 3 stats, probably in different format
+    * {
+    * "monthly":{
+    *   "posted":[
+    *       {"t":"","count"}
+    *       ...
+    *    ],
+    *   "read":[
+    *       {"t":"","count"}
+    *       ...
+    *    ]
+    *  },
+    *  ...weekly...daily
+    *  }
+    *
+    *  "topRead":[
+    *   {FeedId,Title,Read,ReadPercent,LastUpdate,ItemPerDay}
+    *   ...
+    *  ],
+    *  "topStar"...
+    **/
+    /**TODO: change it to GET method, and above
+     * load user monthly reading stats
+     * @return the structure described as above
+     */
+    def loadMonthlyReadStats = AuthAction { (user,request)  =>
+        val hists = userDAO.getUserLastMonthStatsHistograms(user.userId)
+        val topReads = userDAO.getUserLastMonthReadStats(user.userId)
+        val topStars = userDAO.getUserLastMonthStarStats(user.userId)
+
+        val result = Json.obj(
+            "Monthly" -> Json.toJson(hists(0)),
+            "Weekly" -> Json.toJson(hists(1)),
+            "Daily" -> Json.toJson(hists(2)),
+            "TopRead" -> Json.toJson(topReads),
+            "TopStar" -> Json.toJson(topStars)
+        )
+
+        Ok(result).as("application/json")
+    }
+
+    /**
+     * load user monthly feed stats
+     * @return similar strucutre as described
+     */
+    def loadMonthlyFeedStats = AuthAction { (user,request)  =>
+
+        val activeFeeds = userDAO.getUserLastMonthActiveFeedStats(user.userId)
+        val inActiveFeeds = userDAO.getUserInActiveFeedStats(user.userId)
+
+        val result = Json.obj(
+            "ActiveFeeds" -> Json.toJson(activeFeeds),
+            "InActiveFeeds" -> Json.toJson(inActiveFeeds)
+        )
+
+        Ok(result).as("application/json")
+    }
+
+    /**
      * preview the feed stories
      * input data param format: {url: xmlUrl}
      * @return a list of stories of the feed

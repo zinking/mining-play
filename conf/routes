@@ -15,6 +15,9 @@ POST        /user/add-subscription           controllers.UserController.addSubsc
 POST        /user/remove-subscription        controllers.UserController.removeSubscription
 POST        /user/preview-subscription       controllers.UserController.previewSubscription
 POST        /user/get-addsuggestion          controllers.UserController.getAddSuggestion
+POST        /user/arrange-feedsource         controllers.UserController.arrangeFeedSource
+POST        /user/load-lastmonth-readstats   controllers.UserController.loadMonthlyReadStats
+POST        /user/load-lastmonth-feedstats   controllers.UserController.loadMonthlyFeedStats
 
 GET         /user/export-opml                controllers.UserController.exportOPML
 POST        /user/import-opml                controllers.UserController.importOPML

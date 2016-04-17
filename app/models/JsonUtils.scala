@@ -40,6 +40,32 @@ object JsonUtils {
         )
     }
 
+    implicit val readStarWrites = new Writes[FeedReadStat] {
+        //FeedId,Title,Read,ReadPercent,LastUpdate,ItemPerDay
+        def writes(stat: FeedReadStat) = Json.obj(
+            "FeedId"    -> stat.feedId,
+            "Title"     -> stat.title,
+            "Read"      -> stat.count,
+            "ReadPercent" -> stat.percent,
+            "LastUpdate"  -> stat.lastUpdate,
+            "ItemPerDay"  -> stat.ipd
+        )
+    }
+
+    implicit val histWrites = new Writes[HistCounter] {
+        def writes(hist: HistCounter) = Json.obj(
+            "posted"    -> JsArray(hist.postCounter.iterator.map{case(d,c)=>
+                Json.obj("t"-> d,"count"->c)
+            }.toList),
+            "read"     -> JsArray(hist.readCounter.iterator.map{case(d,c)=>
+                Json.obj("t"-> d,"count"->c)
+            }.toList),
+            "like"     -> JsArray(hist.likeCounter.iterator.map{case(d,c)=>
+                Json.obj("t"-> d,"count"->c)
+            }.toList)
+        )
+    }
+
     implicit val opmlOutlineWrites = new Writes[OpmlOutline] {
         def writes(opmlOutline: OpmlOutline) = Json.obj(
             "Title"     -> opmlOutline.title,
