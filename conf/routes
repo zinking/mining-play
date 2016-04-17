@@ -14,6 +14,7 @@ GET         /tasks/delete-old-feed           controllers.ApplicationController.d
 POST        /user/add-subscription           controllers.UserController.addSubscription
 POST        /user/remove-subscription        controllers.UserController.removeSubscription
 POST        /user/preview-subscription       controllers.UserController.previewSubscription
+POST        /user/get-addsuggestion          controllers.UserController.getAddSuggestion
 
 GET         /user/export-opml                controllers.UserController.exportOPML
 POST        /user/import-opml                controllers.UserController.importOPML

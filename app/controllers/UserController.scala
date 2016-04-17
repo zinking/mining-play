@@ -3,7 +3,7 @@ package controllers
 import java.util.Date
 
 import mining.io._
-import mining.io.dao.FeedDao
+import mining.io.dao.{UserDao, FeedDao}
 import models.JsonUtils._
 import org.apache.commons.io.FileUtils
 import play.api.libs.json._
@@ -94,8 +94,8 @@ class UserController extends MiningController {
 
     def getMineUserFromUrl( xmlUrl:String): Option[User] = {
         val pat=raw"http\:\/\/readmine.co\/users\?email=(.*)".r
-        val prefix = "http://readmine.co/users?email="
-        if (xmlUrl.startsWith(prefix)) {
+
+        if (xmlUrl.startsWith(UserDao.IdPrefix)) {
             pat findFirstMatchIn xmlUrl flatMap{ mat =>
                 val email = mat.group(1)
                 userDAO.getUserByEmail(email).flatMap{ user=>
@@ -179,7 +179,7 @@ class UserController extends MiningController {
         val uid = user.userId
         val followUsers = userDAO.getFollowingUsers(uid)
         val followOutlines = followUsers.map{ user =>
-            val title = s"${user.email}'s favorite stories"
+            val title = user.email
             val xmlUrl = s"http://readmine.co/users?email=${user.email}"
             OpmlOutline(title, xmlUrl, "USER", title, xmlUrl )
         }
@@ -337,12 +337,30 @@ class UserController extends MiningController {
     }
 
     /**
+     * get suggested people and feed to follow using user query
+     * @return a list of suggestions
+     */
+    def getAddSuggestion = AuthAction { (user,request)  =>
+        val param = request.body.asJson.get
+        val query = (param \ "query") .as[String]
+
+        val items:List[String] = userDAO.getSuggestedUsersToFollow(query) ++
+            feedDAO.getSuggestedFeedsToFollow(query) ++ List(query)
+
+        val suggestion = Json.obj(
+            "items" -> Json.toJson(items)
+        )
+
+        Ok(suggestion).as("application/json")
+    }
+
+    /**
      * preview the feed stories
      * input data param format: {url: xmlUrl}
      * @return a list of stories of the feed
      *         format: {FeedUrl:xmlUrl, Stories:[Story]}
      */
-    def previewSubscription() = AuthAction { (user,request)  =>
+    def previewSubscription = AuthAction { (user,request)  =>
         val param = request.body.asJson.get
         val url = (param \ "url") .as[String]
 
@@ -385,13 +403,9 @@ class UserController extends MiningController {
      * @return 1 if successfully subscribed
      */
     def addSubscription() = AuthAction { (user,request)  =>
-        //1. update the feed in the system
-        //2. record the feed in user's inventory
-        //TODO: drastically simplified scenario
-        //val url = request.getQueryString("url").get
-        //val url = request.body.asFormUrlEncoded.get("url").head
         val param = request.body.asJson.get
         val url = (param \ "url") .as[String]
+        val folder = (param \ "folder") .as[String]
 
         getMineUserFromUrl(url) match {
             case Some(thatUser) => //User's Star share
@@ -401,7 +415,7 @@ class UserController extends MiningController {
                 val uid = user.userId
                 feedDAO.getRawOutlineFromFeed(url) match {
                     case Some(o) =>
-                        userDAO.addOmplOutline(uid, o)
+                        userDAO.addOmplOutline(uid, o, folder)
                         val feed = feedDAO.loadFeedFromUrl(url).get
                         val userStat = UserStat(uid, feed.feedId, 0, 0, 0, "")
                         userDAO.insertUserStat(userStat)
