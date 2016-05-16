@@ -149,21 +149,14 @@ class UserController extends MiningController {
         val uid = user.userId
         val opml: Opml = userDAO.getUserOpml(uid).getOrElse(new Opml(uid, Nil))
         val opmllist = Json.toJson(opml)
-        //val feedStories: Iterable[Story] = feedDAO.getOpmlStories(opml)
         val feeds = opml.getAllOutlines
         val feedIds = feedDAO.getOpmlFeeds(opml)
         val feedStats = userDAO.getUserFeedUnreadSummary(uid)
-        //val storyIds:List[Long] = feedStories.map(_.id).toList
-        //val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
-        //val userStarStoryIds = userDAO.getUserStarStories(uid, storyIds)
         val indexContent = Json.obj(
             "Opml" -> Json.toJson(opmllist),
-            //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
             "Feeds" -> Json.toJson(feeds.map(Json.toJson(_))),
             "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))), //TODO: refactor, user subscription should from feed object itself, not opml
             "UserReadFeedStats" -> Json.toJson(feedStats.map(Json.toJson(_)))
-            //"UserReadStoryIds" -> Json.toJson(userReadStoryIds),
-            //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
         Logger.info(s"USER[${user.userId}] listFeeds ${feeds.size} feeds ")
@@ -186,16 +179,6 @@ class UserController extends MiningController {
         val opml: Opml = Opml(-user.userId, followOutlines)
         val opmllist = Json.toJson(opml)
         val n = followUsers.size
-        /*val feedStories:Iterable[Story] = (0 to n-1).flatMap{i=>
-            val user = followUsers(i)
-            val outline = followOutlines(i)
-            val starStories = userDAO.getUserStarStories(user.userId)
-            starStories.map{ story=>
-                //make story virtual story to live with real stories
-                //TODO: there's better structures to do this
-                story.copy(feedId = -user.userId, id = -story.id)
-            }
-        }*/
 
         val feedIds: Iterable[Feed] = (0 to n-1).map{i=>
             val user = followUsers(i)
@@ -205,18 +188,11 @@ class UserController extends MiningController {
         }
         val feeds = opml.getAllOutlines
 
-        //val feedStats = userDAO.getUserFeedUnreadSummary(uid)
-        //val storyIds:List[Long] = feedStories.map(_.id).toList
-        //val userReadStoryIds = userDAO.getUserReadStories(uid, storyIds)
-        //val userStarStoryIds = storyIds
+
         val indexContent = Json.obj(
             "StarOpml" -> Json.toJson(opmllist),
-            //"Stories" -> Json.toJson(feedStories.map(Json.toJson(_))),
             "Feeds" -> Json.toJson(feeds.map(Json.toJson(_))),
             "FeedIds" -> Json.toJson(feedIds.map(Json.toJson(_))) //TODO: refactor, user subscription should from feed object itself, not opml
-            //"UserReadFeedStats" -> Json.toJson(feedStats.map(Json.toJson(_))),
-            //"UserReadStoryIds" -> Json.toJson(userReadStoryIds),
-            //"UserStarStoryIds" -> Json.toJson(userStarStoryIds)
         )
 
         Logger.info(s"USER[${user.userId}] list ${feeds.size} feeds ")
@@ -505,6 +481,7 @@ class UserController extends MiningController {
                         val feed = feedDAO.loadFeedFromUrl(url).get
                         val userStat = UserStat(uid, feed.feedId, 0, 0, 0, "")
                         userDAO.insertUserStat(userStat)
+                        userDAO.insertUserFeed(uid, feed.feedId)
                         Logger.info(s"USER[$uid] addSubscription ${o.xmlUrl} ")
                         Ok("1").as("application/json")
                     case None =>
@@ -523,6 +500,11 @@ class UserController extends MiningController {
         val param = request.body.asJson.get
         val url = (param \ "url") .as[String]
         userDAO.removeOmplOutline(user.userId, url)
+        feedDAO.getRawOutlineFromFeed(url) match {
+            case Some(o) =>
+                val feed = feedDAO.loadFeedFromUrl(url).get
+                userDAO.removeUserFeed(user.userId, feed.feedId)
+        }
         Logger.info(s"USER[${user.userId}] removeSubscription $url ")
         Ok("1").as("application/json")
     }
@@ -560,6 +542,7 @@ class UserController extends MiningController {
                             FeedFactory.newFeeds(mergedOpml).foreach{newFeed=>
                                 val savedFeed:Feed=feedDAO.verifyAndCreateFeed(newFeed)
                                 userDAO.setUserFeedStat(user.userId, savedFeed.feedId)
+                                userDAO.setUserFeed(user.userId, savedFeed.feedId)
                             }
                             Logger.info(s"USER[${user.userId}] importOPML merged new feeds")
                             Ok("1").as("application/json")
@@ -584,7 +567,9 @@ class UserController extends MiningController {
         val opml = Opml(user.userId, opmlOutlines)
         val mergedOpml = userDAO.mergeWithUserOpml(opml)
         FeedFactory.newFeeds(mergedOpml).map{newFeed=>
-            feedDAO.verifyAndCreateFeed(newFeed)
+            val savedFeed = feedDAO.verifyAndCreateFeed(newFeed)
+            userDAO.setUserFeedStat(user.userId, savedFeed.feedId)
+            userDAO.setUserFeed(user.userId, savedFeed.feedId)
         }
         Logger.info(s"USER[${user.userId}] uploadOPML merged new feeds")
         Ok("1").as("application/json")
