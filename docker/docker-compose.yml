@@ -2,16 +2,17 @@ version: "2"
 
 services:
   db:
+    #image: zinking/mysqlmy:v1
     image: mysql
     ports:
-      - "3307:3306"
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
-      - ./data/dbdump:./docker-entrypoint-initdb.d
+      - ./data/:/data
 
   web:
-    image: zinking/mining:v1.0
+    image: zinking/mining:v1
     ports:
       - "9000:9000"
     depends_on:
@@ -20,10 +21,10 @@ services:
       - ./data/:/data
 
 
-./data
-./data/dbdump
-./data/dbdump/mining.2016-09-25.sql
-./data/config.sh
-./data/mining.2016-09-25.sql.tar.gz
-./docker-compose.yml
-./Dockerfile
+#./data
+#./data/dbdump
+#./data/dbdump/mining.2016-09-25.sql
+#./data/config.sh
+#./data/mining.2016-09-25.sql.tar.gz
+#./docker-compose.yml
+#./Dockerfile

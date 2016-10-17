@@ -8,12 +8,15 @@ RUN git clone https://github.com/zinking/mining.git /mining-solution/mining
 RUN cd /mining-solution/mining/ && activator publish-local
 
 RUN git clone https://github.com/zinking/mining-play.git /mining-solution/mining-play
-RUN cd /mining-solution/mining-play && sed -i s/MINING_PRODUSER/$MINING_PRODUSER/g conf/application.conf && sed -i s/MINING_PRODPASS/$MINING_PRODPASS/g conf/application.conf
+RUN cd /mining-solution/mining-play && sed -i s/\${MYSQLUSER}/root/g conf/application.conf && sed -i s/\${MYSQLPASS}/root/g conf/application.conf
 
 RUN cat /mining-solution/mining-play/conf/application.conf
 
 RUN cd /mining-solution/mining-play && activator stage
+RUN mkdir /mining-solution/mining-play/logs
 
 
 
-#./target/universal/stage/bin/mining-play -v -d -J-Xloggc:/tmp/gc.log -J-XX:+PrintGCDetails -J-Xms1024m -J-Xmx1024m > logs/console.log 2>&1 &
+CMD cd /mining-solution/mining-play && ./target/universal/stage/bin/mining-play -v -d -J-Xloggc:/data/logs/gc.log -J-XX:+PrintGCDetails -J-Xms1024m -J-Xmx1024m > /data/logs/console.log 2>&1  
+
+#CMD sleep 10000000
