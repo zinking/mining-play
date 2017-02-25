@@ -41,6 +41,8 @@ object FeedRefreshManager {
     val refresh2 = RefreshFeeds(2, d2)
     val refresh3 = RefreshFeeds(3, d3)
     val refresh4 = RefreshFeeds(4, d4)
+
+    val CleanLocks = "CleanLocks"
 }
 
 class FeedRefreshManager extends Actor with ActorLogging {
@@ -50,6 +52,7 @@ class FeedRefreshManager extends Actor with ActorLogging {
     context.system.scheduler.schedule(d2 seconds, d2 seconds, self, refresh2)
     context.system.scheduler.schedule(d3 seconds, d3 seconds, self, refresh3)
     context.system.scheduler.schedule(d4 seconds, d4 seconds, self, refresh4)
+    context.system.scheduler.schedule(1 days, 1 days, self,  CleanLocks)
 
     val feedLock: Map[String, String] = new ConcurrentHashMap[String,String]().asScala
 
@@ -76,6 +79,10 @@ class FeedRefreshManager extends Actor with ActorLogging {
     }
 
     def receive = {
+        case CleanLocks =>
+            feedLock.clear()
+            log.info("Cleaned up all the locks")
+
         case RefreshFeeds(id, duration) =>
             val banner = "***********************************************************************"
             log.info(" BEGIN {} {} {}", id, duration, banner)
