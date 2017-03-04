@@ -1,30 +1,31 @@
 version: "2"
 
 services:
-  db:
-    #image: zinking/mysqlmy:v1
-    image: mysql
+  bbsparse:
+    image: zinking/bbsparse:1.2
+    extra_hosts:
+      zzy: 10.162.73.141
     ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root
+      - "8001:8001"
     volumes:
-      - ./data/:/data
+          - /data/:/data
+    entrypoint: /data/bbsparse/volume/entry_point.sh
 
-  web:
-    image: zinking/mining:v1
+  mining-ionic:
+    image: zinking/mining-ionic:1.0
+    extra_hosts:
+          zzy: 10.162.73.141
+    ports:
+      - "8002:8002"
+    volumes:
+          - /data/:/data
+
+  mining-play:
+    image: zinking/mining-play:1.2
+    extra_hosts:
+          zzy: 10.162.73.141
     ports:
       - "9000:9000"
-    depends_on:
-      - "db"
     volumes:
-      - ./data/:/data
+      - /data/:/data
 
-
-#./data
-#./data/dbdump
-#./data/dbdump/mining.2016-09-25.sql
-#./data/config.sh
-#./data/mining.2016-09-25.sql.tar.gz
-#./docker-compose.yml
-#./Dockerfile
